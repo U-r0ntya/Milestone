@@ -20,50 +20,50 @@
 			containerPortal = 5AC3A524309100860030E12F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 5AC3A52B309100860030E12F;
-			remoteInfo = McHub;
+			remoteInfo = Milestone;
 		};
 		5AC3A544309100870030E12F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 5AC3A524309100860030E12F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 5AC3A52B309100860030E12F;
-			remoteInfo = McHub;
+			remoteInfo = Milestone;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		5AC3A52C309100860030E12F /* McHub.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = McHub.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5AC3A539309100870030E12F /* McHubTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = McHubTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5AC3A543309100870030E12F /* McHubUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = McHubUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5AC3A52C309100860030E12F /* Milestone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Milestone.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5AC3A539309100870030E12F /* MilestoneTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MilestoneTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5AC3A543309100870030E12F /* MilestoneUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MilestoneUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		5AC3A56F30922CB90030E12F /* Exceptions for "McHub" folder in "McHub" target */ = {
+		5AC3A56F30922CB90030E12F /* Exceptions for "Milestone" folder in "Milestone" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 5AC3A52B309100860030E12F /* McHub */;
+			target = 5AC3A52B309100860030E12F /* Milestone */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5AC3A52E309100860030E12F /* McHub */ = {
+		5AC3A52E309100860030E12F /* Milestone */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				5AC3A56F30922CB90030E12F /* Exceptions for "McHub" folder in "McHub" target */,
+				5AC3A56F30922CB90030E12F /* Exceptions for "Milestone" folder in "Milestone" target */,
 			);
-			path = McHub;
+			path = Milestone;
 			sourceTree = "<group>";
 		};
-		5AC3A53C309100870030E12F /* McHubTests */ = {
+		5AC3A53C309100870030E12F /* MilestoneTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = McHubTests;
+			path = MilestoneTests;
 			sourceTree = "<group>";
 		};
-		5AC3A546309100870030E12F /* McHubUITests */ = {
+		5AC3A546309100870030E12F /* MilestoneUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = McHubUITests;
+			path = MilestoneUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -95,9 +95,9 @@
 		5AC3A523309100860030E12F = {
 			isa = PBXGroup;
 			children = (
-				5AC3A52E309100860030E12F /* McHub */,
-				5AC3A53C309100870030E12F /* McHubTests */,
-				5AC3A546309100870030E12F /* McHubUITests */,
+				5AC3A52E309100860030E12F /* Milestone */,
+				5AC3A53C309100870030E12F /* MilestoneTests */,
+				5AC3A546309100870030E12F /* MilestoneUITests */,
 				5AC3A52D309100860030E12F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -105,9 +105,9 @@
 		5AC3A52D309100860030E12F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5AC3A52C309100860030E12F /* McHub.app */,
-				5AC3A539309100870030E12F /* McHubTests.xctest */,
-				5AC3A543309100870030E12F /* McHubUITests.xctest */,
+				5AC3A52C309100860030E12F /* Milestone.app */,
+				5AC3A539309100870030E12F /* MilestoneTests.xctest */,
+				5AC3A543309100870030E12F /* MilestoneUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,9 +115,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5AC3A52B309100860030E12F /* McHub */ = {
+		5AC3A52B309100860030E12F /* Milestone */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5AC3A54B309100870030E12F /* Build configuration list for PBXNativeTarget "McHub" */;
+			buildConfigurationList = 5AC3A54B309100870030E12F /* Build configuration list for PBXNativeTarget "Milestone" */;
 			buildPhases = (
 				5AC3A528309100860030E12F /* Sources */,
 				5AC3A529309100860030E12F /* Frameworks */,
@@ -126,9 +126,9 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
-				5AC3A52E309100860030E12F /* McHub */,
+				5AC3A52E309100860030E12F /* Milestone */,
 			);
-			name = McHub;
+			name = Milestone;
 			packageProductDependencies = (
 				5AC3A56330922C410030E12F /* FirebaseAuth */,
 				5AC3A56530922C410030E12F /* FirebaseFirestore */,
@@ -136,13 +136,13 @@
 				5AC3A56A30922C970030E12F /* GoogleSignIn */,
 				5AC3A56C30922C970030E12F /* GoogleSignInSwift */,
 			);
-			productName = McHub;
-			productReference = 5AC3A52C309100860030E12F /* McHub.app */;
+			productName = Milestone;
+			productReference = 5AC3A52C309100860030E12F /* Milestone.app */;
 			productType = "com.apple.product-type.application";
 		};
-		5AC3A538309100870030E12F /* McHubTests */ = {
+		5AC3A538309100870030E12F /* MilestoneTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5AC3A54E309100870030E12F /* Build configuration list for PBXNativeTarget "McHubTests" */;
+			buildConfigurationList = 5AC3A54E309100870030E12F /* Build configuration list for PBXNativeTarget "MilestoneTests" */;
 			buildPhases = (
 				5AC3A535309100870030E12F /* Sources */,
 				5AC3A536309100870030E12F /* Frameworks */,
@@ -154,16 +154,16 @@
 				5AC3A53B309100870030E12F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5AC3A53C309100870030E12F /* McHubTests */,
+				5AC3A53C309100870030E12F /* MilestoneTests */,
 			);
-			name = McHubTests;
-			productName = McHubTests;
-			productReference = 5AC3A539309100870030E12F /* McHubTests.xctest */;
+			name = MilestoneTests;
+			productName = MilestoneTests;
+			productReference = 5AC3A539309100870030E12F /* MilestoneTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		5AC3A542309100870030E12F /* McHubUITests */ = {
+		5AC3A542309100870030E12F /* MilestoneUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5AC3A551309100870030E12F /* Build configuration list for PBXNativeTarget "McHubUITests" */;
+			buildConfigurationList = 5AC3A551309100870030E12F /* Build configuration list for PBXNativeTarget "MilestoneUITests" */;
 			buildPhases = (
 				5AC3A53F309100870030E12F /* Sources */,
 				5AC3A540309100870030E12F /* Frameworks */,
@@ -175,11 +175,11 @@
 				5AC3A545309100870030E12F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5AC3A546309100870030E12F /* McHubUITests */,
+				5AC3A546309100870030E12F /* MilestoneUITests */,
 			);
-			name = McHubUITests;
-			productName = McHubUITests;
-			productReference = 5AC3A543309100870030E12F /* McHubUITests.xctest */;
+			name = MilestoneUITests;
+			productName = MilestoneUITests;
+			productReference = 5AC3A543309100870030E12F /* MilestoneUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -205,7 +205,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5AC3A527309100860030E12F /* Build configuration list for PBXProject "McHub" */;
+			buildConfigurationList = 5AC3A527309100860030E12F /* Build configuration list for PBXProject "Milestone" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -223,9 +223,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5AC3A52B309100860030E12F /* McHub */,
-				5AC3A538309100870030E12F /* McHubTests */,
-				5AC3A542309100870030E12F /* McHubUITests */,
+				5AC3A52B309100860030E12F /* Milestone */,
+				5AC3A538309100870030E12F /* MilestoneTests */,
+				5AC3A542309100870030E12F /* MilestoneUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -269,18 +269,18 @@
 /* Begin PBXTargetDependency section */
 		5AC3A53B309100870030E12F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5AC3A52B309100860030E12F /* McHub */;
+			target = 5AC3A52B309100860030E12F /* Milestone */;
 			targetProxy = 5AC3A53A309100870030E12F /* PBXContainerItemProxy */;
 		};
 		5AC3A545309100870030E12F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5AC3A52B309100860030E12F /* McHub */;
+			target = 5AC3A52B309100860030E12F /* Milestone */;
 			targetProxy = 5AC3A544309100870030E12F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		5AC3A549309100870030E12F /* Debug configuration for PBXProject "McHub" */ = {
+		5AC3A549309100870030E12F /* Debug configuration for PBXProject "Milestone" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -344,7 +344,7 @@
 			};
 			name = Debug;
 		};
-		5AC3A54A309100870030E12F /* Release configuration for PBXProject "McHub" */ = {
+		5AC3A54A309100870030E12F /* Release configuration for PBXProject "Milestone" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -401,7 +401,7 @@
 			};
 			name = Release;
 		};
-		5AC3A54C309100870030E12F /* Debug configuration for PBXNativeTarget "McHub" */ = {
+		5AC3A54C309100870030E12F /* Debug configuration for PBXNativeTarget "Milestone" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -411,7 +411,7 @@
 				DEVELOPMENT_TEAM = HUF5D9TMY7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = McHub/Info.plist;
+				INFOPLIST_FILE = Milestone/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Milestone;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -435,7 +435,7 @@
 			};
 			name = Debug;
 		};
-		5AC3A54D309100870030E12F /* Release configuration for PBXNativeTarget "McHub" */ = {
+		5AC3A54D309100870030E12F /* Release configuration for PBXNativeTarget "Milestone" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -445,7 +445,7 @@
 				DEVELOPMENT_TEAM = HUF5D9TMY7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = McHub/Info.plist;
+				INFOPLIST_FILE = Milestone/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Milestone;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -469,7 +469,7 @@
 			};
 			name = Release;
 		};
-		5AC3A54F309100870030E12F /* Debug configuration for PBXNativeTarget "McHubTests" */ = {
+		5AC3A54F309100870030E12F /* Debug configuration for PBXNativeTarget "MilestoneTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -479,7 +479,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.urontya.McHubTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.urontya.MilestoneTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -487,11 +487,11 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/McHub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/McHub";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Milestone.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Milestone";
 			};
 			name = Debug;
 		};
-		5AC3A550309100870030E12F /* Release configuration for PBXNativeTarget "McHubTests" */ = {
+		5AC3A550309100870030E12F /* Release configuration for PBXNativeTarget "MilestoneTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -501,7 +501,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.urontya.McHubTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.urontya.MilestoneTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -509,11 +509,11 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/McHub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/McHub";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Milestone.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Milestone";
 			};
 			name = Release;
 		};
-		5AC3A552309100870030E12F /* Debug configuration for PBXNativeTarget "McHubUITests" */ = {
+		5AC3A552309100870030E12F /* Debug configuration for PBXNativeTarget "MilestoneUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -521,7 +521,7 @@
 				DEVELOPMENT_TEAM = HUF5D9TMY7;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.urontya.McHubUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.urontya.MilestoneUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -529,11 +529,11 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = McHub;
+				TEST_TARGET_NAME = Milestone;
 			};
 			name = Debug;
 		};
-		5AC3A553309100870030E12F /* Release configuration for PBXNativeTarget "McHubUITests" */ = {
+		5AC3A553309100870030E12F /* Release configuration for PBXNativeTarget "MilestoneUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -541,7 +541,7 @@
 				DEVELOPMENT_TEAM = HUF5D9TMY7;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.urontya.McHubUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.urontya.MilestoneUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -549,42 +549,42 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = McHub;
+				TEST_TARGET_NAME = Milestone;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5AC3A527309100860030E12F /* Build configuration list for PBXProject "McHub" */ = {
+		5AC3A527309100860030E12F /* Build configuration list for PBXProject "Milestone" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5AC3A549309100870030E12F /* Debug configuration for PBXProject "McHub" */,
-				5AC3A54A309100870030E12F /* Release configuration for PBXProject "McHub" */,
+				5AC3A549309100870030E12F /* Debug configuration for PBXProject "Milestone" */,
+				5AC3A54A309100870030E12F /* Release configuration for PBXProject "Milestone" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		5AC3A54B309100870030E12F /* Build configuration list for PBXNativeTarget "McHub" */ = {
+		5AC3A54B309100870030E12F /* Build configuration list for PBXNativeTarget "Milestone" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5AC3A54C309100870030E12F /* Debug configuration for PBXNativeTarget "McHub" */,
-				5AC3A54D309100870030E12F /* Release configuration for PBXNativeTarget "McHub" */,
+				5AC3A54C309100870030E12F /* Debug configuration for PBXNativeTarget "Milestone" */,
+				5AC3A54D309100870030E12F /* Release configuration for PBXNativeTarget "Milestone" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		5AC3A54E309100870030E12F /* Build configuration list for PBXNativeTarget "McHubTests" */ = {
+		5AC3A54E309100870030E12F /* Build configuration list for PBXNativeTarget "MilestoneTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5AC3A54F309100870030E12F /* Debug configuration for PBXNativeTarget "McHubTests" */,
-				5AC3A550309100870030E12F /* Release configuration for PBXNativeTarget "McHubTests" */,
+				5AC3A54F309100870030E12F /* Debug configuration for PBXNativeTarget "MilestoneTests" */,
+				5AC3A550309100870030E12F /* Release configuration for PBXNativeTarget "MilestoneTests" */,
 			);
 			defaultConfigurationName = Release;
 		};
-		5AC3A551309100870030E12F /* Build configuration list for PBXNativeTarget "McHubUITests" */ = {
+		5AC3A551309100870030E12F /* Build configuration list for PBXNativeTarget "MilestoneUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5AC3A552309100870030E12F /* Debug configuration for PBXNativeTarget "McHubUITests" */,
-				5AC3A553309100870030E12F /* Release configuration for PBXNativeTarget "McHubUITests" */,
+				5AC3A552309100870030E12F /* Debug configuration for PBXNativeTarget "MilestoneUITests" */,
+				5AC3A553309100870030E12F /* Release configuration for PBXNativeTarget "MilestoneUITests" */,
 			);
 			defaultConfigurationName = Release;
 		};

@@ -3,7 +3,7 @@ import FirebaseCore
 import GoogleSignIn
 
 @main
-struct McHubApp: App {
+struct MilestoneApp: App {
     init() {
         // アプリが起動したときに Firebase を使える状態にする
         FirebaseApp.configure()

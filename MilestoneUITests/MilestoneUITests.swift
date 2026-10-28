@@ -1,13 +1,13 @@
 //
-//  McHubUITests.swift
-//  McHubUITests
+//  MilestoneUITests.swift
+//  MilestoneUITests
 //
 //  Created by うーろんちゃ_Mac on 2026/10/28.
 //
 
 import XCTest
 
-final class McHubUITests: XCTestCase {
+final class MilestoneUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
