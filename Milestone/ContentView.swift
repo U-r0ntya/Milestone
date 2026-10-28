@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var userName: String?
     @State private var errorMessage: String?
     @State private var showFirestoreCheck = false
+    @State private var showStorageCheck = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -22,6 +23,9 @@ struct ContentView: View {
                 }
                 Button("Firestore の検証を開く") {
                     showFirestoreCheck = true
+                }
+                Button("Storage の検証を開く") {
+                    showStorageCheck = true
                 }
             } else {
                 GoogleSignInButton {
@@ -41,6 +45,9 @@ struct ContentView: View {
         .padding()
         .sheet(isPresented: $showFirestoreCheck) {
             FirestoreCheckView()
+        }
+        .sheet(isPresented: $showStorageCheck) {
+            StorageCheckView()
         }
         .onAppear {
             // すでにログインしていれば、その人を表示する
