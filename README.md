@@ -262,6 +262,15 @@ level.dat の中の名前と値は、技術検証で自分のワールドを読�
 - [ ] フェーズ9：仕上げ（見た目、ダークモード、シミュレーターで点検、README）`step/9-1-finish`
 - [ ] `feature/sns-app` を `main` にマージ
 
+## 技術検証の結果
+| 検証すること | 結果 | 日付 | メモ |
+|---|---|---|---|
+| Google ログイン（Firebase Authentication） | OK | 2026-10-28 | シミュレーターで Google にログインし、Firebase の uid が取れた。コンソールのユーザー一覧の uid と一致。Google ログインを有効にしたあとに GoogleService-Info.plist を入れ直す必要があった（CLIENT_ID が足されるため） |
+| 仮の API の読み込み（URLSession・Codable） | 未 |  |  |
+| Storage の画像 | 未 |  |  |
+| level.dat のシード値 | 未 |  |  |
+| セキュリティルール | 未 |  |  |
+
 ## 11. 動かし方
 （最後に書く）
 - Firebase の設定ファイル（GoogleService-Info.plist）は GitHub に上げていない。動かすときの用意のしかたをここに書く。
