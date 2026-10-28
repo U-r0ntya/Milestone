@@ -1,8 +1,8 @@
-import SwiftUI
-import FirebaseCore
 import FirebaseAuth
+import FirebaseCore
 import GoogleSignIn
 import GoogleSignInSwift
+import SwiftUI
 
 // 技術検証用：Google でログインして、Firebase の uid が取れるか確かめる
 struct ContentView: View {
@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var showFirestoreCheck = false
     @State private var showStorageCheck = false
+    @State private var showLevelDatCheck = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -26,6 +27,9 @@ struct ContentView: View {
                 }
                 Button("Storage の検証を開く") {
                     showStorageCheck = true
+                }
+                Button("level.dat の検証を開く") {
+                    showLevelDatCheck = true
                 }
             } else {
                 GoogleSignInButton {
@@ -49,6 +53,9 @@ struct ContentView: View {
         .sheet(isPresented: $showStorageCheck) {
             StorageCheckView()
         }
+        .sheet(isPresented: $showLevelDatCheck) {
+            LevelDatCheckView()
+        }
         .onAppear {
             // すでにログインしていれば、その人を表示する
             if let user = Auth.auth().currentUser {
@@ -62,22 +69,29 @@ struct ContentView: View {
     func signIn() async {
         // GoogleService-Info.plist の CLIENT_ID を使う
         guard let clientID = FirebaseApp.app()?.options.clientID else {
-            errorMessage = "CLIENT_ID が見つかりません。GoogleService-Info.plist を確かめてください"
+            errorMessage =
+                "CLIENT_ID が見つかりません。GoogleService-Info.plist を確かめてください"
             return
         }
-        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(
+            clientID: clientID
+        )
 
         // Google のログイン画面を出すための、今の画面
-        guard let rootViewController = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first?.keyWindow?.rootViewController else {
+        guard
+            let rootViewController = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first?.keyWindow?.rootViewController
+        else {
             errorMessage = "画面が見つかりません"
             return
         }
 
         do {
             // 1. Google にログインする
-            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController)
+            let result = try await GIDSignIn.sharedInstance.signIn(
+                withPresenting: rootViewController
+            )
             guard let idToken = result.user.idToken?.tokenString else {
                 errorMessage = "Google の ID トークンが取れませんでした"
                 return
