@@ -269,7 +269,7 @@ level.dat の中の名前と値は、技術検証で自分のワールドを読�
 | 仮の API の読み込み（URLSession・Codable） | OK | 2026-10-29 | Gist の JSON を URLSession と Codable で読めた。返信の除外と新しい順の並べ替えも確認 |
 | Storage の画像 | 未 |  |  |
 | level.dat のシード値 | 未 |  |  |
-| セキュリティルール | 未 |  |  |
+| セキュリティルール（Firestore） | OK | 2026-10-29 | Firestore を asia-northeast1（東京）に作成。ワールドは本人だけが読み書きできるルールで、自分のワールドの保存と ownerId で絞った読み込みは成功、他人のワールドと条件なしの全件読み込みは permission エラーで正しく断られた。ルールは絞り込みの代わりにならないので、読むときは必ず ownerId で絞る |
 
 ## 11. 動かし方
 （最後に書く）
