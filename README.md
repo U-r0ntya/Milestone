@@ -267,7 +267,7 @@ level.dat の中の名前と値は、技術検証で自分のワールドを読�
 |---|---|---|---|
 | Google ログイン（Firebase Authentication） | OK | 2026-10-28 | シミュレーターで Google にログインし、Firebase の uid が取れた。コンソールのユーザー一覧の uid と一致。Google ログインを有効にしたあとに GoogleService-Info.plist を入れ直す必要があった（CLIENT_ID が足されるため） |
 | 仮の API の読み込み（URLSession・Codable） | OK | 2026-10-29 | Gist の JSON を URLSession と Codable で読めた。返信の除外と新しい順の並べ替えも確認 |
-| Storage の画像 | 未 |  |  |
+| Storage の画像 | OK | 2026-10-29 | Blaze プランに切り替え（予算アラート 100 円）、Storage を US-CENTRAL1 に作成。写真を選んで長い辺 1280px・JPEG に小さくし、posts/（uid）/ にアップロード、もらった URL から表示できた。ルールで本人のフォルダ・5MB まで・画像だけに制限 |
 | level.dat のシード値 | 未 |  |  |
 | セキュリティルール（Firestore） | OK | 2026-10-29 | Firestore を asia-northeast1（東京）に作成。ワールドは本人だけが読み書きできるルールで、自分のワールドの保存と ownerId で絞った読み込みは成功、他人のワールドと条件なしの全件読み込みは permission エラーで正しく断られた。ルールは絞り込みの代わりにならないので、読むときは必ず ownerId で絞る |
 
