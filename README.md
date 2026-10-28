@@ -266,7 +266,7 @@ level.dat の中の名前と値は、技術検証で自分のワールドを読�
 | 検証すること | 結果 | 日付 | メモ |
 |---|---|---|---|
 | Google ログイン（Firebase Authentication） | OK | 2026-10-28 | シミュレーターで Google にログインし、Firebase の uid が取れた。コンソールのユーザー一覧の uid と一致。Google ログインを有効にしたあとに GoogleService-Info.plist を入れ直す必要があった（CLIENT_ID が足されるため） |
-| 仮の API の読み込み（URLSession・Codable） | 未 |  |  |
+| 仮の API の読み込み（URLSession・Codable） | OK | 2026-10-29 | Gist の JSON を URLSession と Codable で読めた。返信の除外と新しい順の並べ替えも確認 |
 | Storage の画像 | 未 |  |  |
 | level.dat のシード値 | 未 |  |  |
 | セキュリティルール | 未 |  |  |
