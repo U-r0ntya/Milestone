@@ -18,7 +18,7 @@ struct FirestoreUserRepository: UserRepository {
         guard snapshot.exists else {
            return nil
         }
-        // あった   → User に変換して返す（登録済みの人）
+        // あれば User に変換して返す
         let user = try snapshot.data(as: User.self)
         return user
     }
