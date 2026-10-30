@@ -252,7 +252,12 @@ level.dat の中の名前と値は、技術検証で自分のワールドを読�
 - [x] フェーズ0：準備（リポジトリ、ブランチ、要件定義）`step/0-1-requirements`
 - [x] フェーズ1：設計（画面のラフ、技術検証）`step/1-1-design`、`step/1-2-rename`、`step/1-3-tech-check`
   - 技術検証：Google ログイン、仮の API の読み込み、Storage の画像、level.dat のシード値、セキュリティルール
-- [ ] フェーズ2：土台（ログイン画面、初回の機種選択、タブバー、Firebase の設定）`step/2-1-base`
+- [ ] フェーズ2：土台（ログイン画面、初回の機種選択、タブバー、Firebase の設定）
+  - [x] 2-1 ログインの仕組み（User、UserRepository、AuthViewModel、仮の画面の出し分け）`step/2-1-auth`
+    - 動作確認 OK（2026-10-31）：初回ログイン → 初回設定 → users/（uid）に保存、再起動してもログインしたまま、ログアウト、再ログインで初回設定を飛ばす
+  - [ ] 2-2 ログイン画面 `step/2-2-login`
+  - [ ] 2-3 初回設定（機種 → 名前 → 自己紹介）`step/2-3-onboarding`
+  - [ ] 2-4 タブバー `step/2-4-tabs`
 - [ ] フェーズ3：タイムライン（仮の API → Firebase への差し替え）`step/3-1-timeline`
 - [ ] フェーズ4：投稿新規作成と投稿の詳細 `step/4-1-post`
 - [ ] フェーズ5：返信・いいね `step/5-1-reply-like`

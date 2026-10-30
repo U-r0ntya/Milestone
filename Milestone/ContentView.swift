@@ -34,7 +34,7 @@ struct ContentView: View {
             } else {
                 GoogleSignInButton {
                     Task {
-                        await signIn()
+                       
                     }
                 }
                 .frame(width: 240, height: 50)
@@ -65,53 +65,7 @@ struct ContentView: View {
         }
     }
 
-    // Google でログイン → そのまま Firebase にもログイン
-    func signIn() async {
-        // GoogleService-Info.plist の CLIENT_ID を使う
-        guard let clientID = FirebaseApp.app()?.options.clientID else {
-            errorMessage =
-                "CLIENT_ID が見つかりません。GoogleService-Info.plist を確かめてください"
-            return
-        }
-        GIDSignIn.sharedInstance.configuration = GIDConfiguration(
-            clientID: clientID
-        )
-
-        // Google のログイン画面を出すための、今の画面
-        guard
-            let rootViewController = UIApplication.shared.connectedScenes
-                .compactMap({ $0 as? UIWindowScene })
-                .first?.keyWindow?.rootViewController
-        else {
-            errorMessage = "画面が見つかりません"
-            return
-        }
-
-        do {
-            // 1. Google にログインする
-            let result = try await GIDSignIn.sharedInstance.signIn(
-                withPresenting: rootViewController
-            )
-            guard let idToken = result.user.idToken?.tokenString else {
-                errorMessage = "Google の ID トークンが取れませんでした"
-                return
-            }
-
-            // 2. Google のログイン情報で、Firebase にログインする
-            let credential = GoogleAuthProvider.credential(
-                withIDToken: idToken,
-                accessToken: result.user.accessToken.tokenString
-            )
-            let authResult = try await Auth.auth().signIn(with: credential)
-
-            // 3. Firebase が作った uid を表示する
-            uid = authResult.user.uid
-            userName = authResult.user.displayName
-            errorMessage = nil
-        } catch {
-            errorMessage = "ログインに失敗しました：\(error.localizedDescription)"
-        }
-    }
+   
 
     // Firebase と Google の両方からログアウトする
     func signOut() {

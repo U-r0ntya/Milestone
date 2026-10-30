@@ -11,7 +11,7 @@ struct MilestoneApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
                 // Google のログイン画面からアプリに戻ってきたときの処理
                 .onOpenURL { url in
                     GIDSignIn.sharedInstance.handle(url)
