@@ -142,8 +142,22 @@ final class AuthViewModel {
             // 成功したら、state を signedIn にする
             state = .signedIn(user)
         } catch {
-            // 5. 失敗したら、errorMessage にメッセージを入れる（state は needsOnboarding のまま）
+            // 失敗したら、errorMessage にメッセージを入れる（state は needsOnboarding のまま）
             errorMessage = "保存できませんでした。通信状態を確かめて、もう一度試してください。"
+        }
+    }
+    
+    // ログアウト：Firebase と Google の両方からログアウトして、ログイン画面に戻る
+    func signOut() {
+        do {
+            // Firebase からログアウトする
+            try Auth.auth().signOut()
+            // Google からもログアウトする
+            GIDSignIn.sharedInstance.signOut()
+            // state を signedOut にする
+            state = .signedOut
+        } catch {
+            errorMessage = "ログアウトに失敗しました。もう一度試してください。"
         }
     }
 
