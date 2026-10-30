@@ -34,7 +34,7 @@ struct ContentView: View {
             } else {
                 GoogleSignInButton {
                     Task {
-                        await signIn()
+                       
                     }
                 }
                 .frame(width: 240, height: 50)
