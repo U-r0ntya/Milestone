@@ -57,7 +57,7 @@ struct LoginView: View {
                         Color(red: 31 / 255, green: 31 / 255, blue: 31 / 255)
                     )
                     .frame(width: 300, height: 48)
-                    .background(.orange)
+                    .background(.tint)
                     .clipShape(Capsule())
             }
             .sheet(isPresented: $showSheet) {

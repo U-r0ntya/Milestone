@@ -16,6 +16,7 @@ final class AuthViewModel {
 
     var state: AuthState = .checking
     var errorMessage: String? = nil
+    var isSaving = false   // 保存中かどうか
 
     private let repository: UserRepository
 
@@ -123,6 +124,9 @@ final class AuthViewModel {
 
     // 初回設定の完了：入力された内容で User を作って保存し、ホームへ進む
     func completeOnboarding(name: String, device: Device, bio: String?) async {
+
+        isSaving = true  // 保存を始めた
+        defer { isSaving = false }  // この関数を抜けるときに、必ず false に戻す
 
         errorMessage = nil
         // ログイン中の人の uid を取り出す。いなければ state を signedOut にして終わり
