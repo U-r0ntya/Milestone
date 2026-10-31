@@ -24,14 +24,11 @@ struct DeviceStepView: View {
                                     .frame(width: 36)  // アイコンの幅をそろえる
                                 Text(item.displayName)
                                 Spacer()
-                                if selectedDevice == item {  // 選んだ機種にはチェックを付ける
-                                    Image(
-                                        systemName: "checkmark.circle.fill"
-                                    )
+                                Image(systemName: "checkmark.circle.fill")
                                     .resizable()
                                     .frame(width: 24, height: 24)
-                                    .foregroundStyle(.tint)  // アプリカラー
-                                }
+                                    .foregroundStyle(.tint)
+                                    .opacity(selectedDevice == item ? 1 : 0)
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 20)

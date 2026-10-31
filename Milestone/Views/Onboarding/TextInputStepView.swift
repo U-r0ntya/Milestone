@@ -5,12 +5,9 @@ struct TextInputStepView: View {
     @Binding var name: String
     @Binding var bio: String
     let isSaving: Bool   // 保存中かどうか（親から受け取る）
-    // 入力欄にすぐカーソルを置く
-    @FocusState private var isFocused: Bool
+    
     let complete: () -> Void
     let onBack: () -> Void
-    
-    
 
     // 最大文字数
     private let nameMaxLength = 20
@@ -25,6 +22,7 @@ struct TextInputStepView: View {
     private var trimmedBio: String {
         bio.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    
     // 決定を押せるかどうか
     private var canGoNext: Bool {
         // 名前は空でなく上限以下、自己紹介は上限以下（空でもOK）
@@ -44,8 +42,6 @@ struct TextInputStepView: View {
             // 名前の入力欄
             TextField("名前", text: $name)
                 .padding(.leading, 16)
-                .focused($isFocused)
-                .onAppear { isFocused = true }  // 画面が出たらすぐキーボードを出す
                 .foregroundStyle(.primary).bold()
                 .font(.system(size: 24))
                 .frame(maxWidth: .infinity)
@@ -57,7 +53,7 @@ struct TextInputStepView: View {
             VStack(alignment: .leading) {
                 Text(
                     trimmedName.count > nameMaxLength
-                        ? "文字数が\(nameMaxLength)文字を超えています" : "※必須"
+                        ? "文字数が\(nameMaxLength)文字を超えています" : "※ 必須"
                 )
                 .font(.footnote)
                 .foregroundStyle(.red)
