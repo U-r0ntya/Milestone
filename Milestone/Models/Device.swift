@@ -14,7 +14,7 @@ enum Device: String, Codable, CaseIterable {
     // 画面に出す名前
     var displayName: String {
         switch self {
-        case .nintendoSwitch: "Switch"
+        case .nintendoSwitch: "Switch・Switch2"
         case .playStation: "PlayStation"
         case .xbox: "Xbox"
         case .iPhone: "iPhone"
@@ -22,6 +22,24 @@ enum Device: String, Codable, CaseIterable {
         case .android: "Android"
         case .windows: "Windows（PC）"
         case .other: "その他"
+        }
+    }
+    
+    // 機種ごとのアイコン（SF Symbols の名前）
+    var iconName: String {
+        switch self {
+        case .nintendoSwitch, .playStation, .xbox:
+            "gamecontroller.fill"
+        case .iPhone:
+            "iphone"
+        case .iPad:
+            "ipad"
+        case .android:
+            "candybarphone"
+        case .windows:
+            "desktopcomputer"
+        case .other:
+            "questionmark.circle"
         }
     }
 }
