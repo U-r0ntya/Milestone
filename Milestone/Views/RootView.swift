@@ -16,10 +16,7 @@ struct RootView: View {
                 // くるくるを出す
                 ProgressView()
             case .signedOut:
-                // Google のログインボタン
-                GoogleSignInButton {
-                    Task { await authViewModel.signIn() }
-                }
+                LoginView(authViewModel: authViewModel)
             case .needsOnboarding:
                 // Picker、名前と自己紹介の TextField、完了ボタン
                 TextField("名前(必須)", text: $name)
@@ -43,10 +40,10 @@ struct RootView: View {
             case .signedIn(let user):
                 // 名前を表示して、ログアウトボタンを置く
                 Text(user.name)
-                Button("ログアウト") { authViewModel.signOut() }
-            }
-            if let message = authViewModel.errorMessage {
-                Text(message).foregroundStyle(.red)
+                Button("ログアウト") {
+                    authViewModel.signOut()
+
+                }
             }
         }
         .padding()
