@@ -114,14 +114,16 @@ final class AuthViewModel {
             // もらった uid を loadUser に渡して、state を変える
             await loadUser(uid: authResult.user.uid)
 
+        } catch let error as GIDSignInError where error.code == .canceled {
+            // キャンセルは失敗ではないので、何もしない
         } catch {
-            errorMessage = "ログインに失敗しました：\(error.localizedDescription)"
+            errorMessage = "ログインできませんでした。もう一度試してください。"
         }
     }
 
     // 初回設定の完了：入力された内容で User を作って保存し、ホームへ進む
     func completeOnboarding(name: String, device: Device, bio: String?) async {
-        
+
         errorMessage = nil
         // ログイン中の人の uid を取り出す。いなければ state を signedOut にして終わり
         guard let firebaseUser = Auth.auth().currentUser else {
@@ -146,7 +148,7 @@ final class AuthViewModel {
             errorMessage = "保存できませんでした。通信状態を確かめて、もう一度試してください。"
         }
     }
-    
+
     // ログアウト：Firebase と Google の両方からログアウトして、ログイン画面に戻る
     func signOut() {
         do {
@@ -156,6 +158,7 @@ final class AuthViewModel {
             GIDSignIn.sharedInstance.signOut()
             // state を signedOut にする
             state = .signedOut
+
         } catch {
             errorMessage = "ログアウトに失敗しました。もう一度試してください。"
         }
