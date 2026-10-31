@@ -13,15 +13,9 @@ struct RootView: View {
             case .needsOnboarding:
                 OnboardingView(authViewModel: authViewModel)  // 初回設定
             case .signedIn(let user):
-                // 仮のホーム：名前とログアウトボタン（2-4 でタブに置き換える）
-                Text(user.name)
-                Button("ログアウト") {
-                    authViewModel.signOut()
-
-                }
+                MainTabView(authViewModel: authViewModel, user: user)
             }
         }
-        .padding()
         .task {  // 画面が出たときに起動時チェックを呼ぶ
             await authViewModel.checkCurrentUser()
         }
