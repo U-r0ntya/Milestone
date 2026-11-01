@@ -4,6 +4,8 @@ import SwiftUI
 struct TimelineView: View {
     @State private var viewModel = TimelineViewModel()
 
+    @State private var isBottomRefreshing = false  // 下の更新の途中かどうか
+
     var body: some View {
         // 一覧の上に、右下の投稿ボタンを重ねる
         ZStack(alignment: .bottomTrailing) {
@@ -47,13 +49,28 @@ struct TimelineView: View {
                     ForEach(viewModel.posts) { post in
                         PostRowView(post: post)
                     }
+
+                    // 一番下の目印：画面に入ったら更新する（くるくるもここに出す）
+                    ProgressView()
+                        .frame(height: 32)
+                        .opacity(isBottomRefreshing ? 1 : 0)  // 場所はいつも取っておいて、更新中だけ見せる
+                        .onAppear {
+                            guard !isBottomRefreshing else { return }
+                            Task {
+                                isBottomRefreshing = true  // くるくるを見せる
+                                await viewModel.loadPosts()
+                                isBottomRefreshing = false  // 取得が終わったら隠す
+                            }
+                        }
                 }
                 .padding(.top, 8)
                 .padding(.horizontal, 8)
+                .padding(.bottom, 72)
             }
             .refreshable {
                 await viewModel.loadPosts()  // 引っ張って更新
             }
+
         } else if viewModel.isLoading {
             // 初めての読み込み中
             ProgressView()
