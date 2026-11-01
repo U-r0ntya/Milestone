@@ -5,16 +5,16 @@ struct LoginView: View {
     @State private var showSheet = false
     var body: some View {
         VStack(spacing: 0) {
-            // アプリ名（仮フォント及びタイトルロゴ）
-            Text("Milestone").font(.system(size: 50)).bold()
-            // サブタイトル（仮テキスト）
-            Text("統合版プレイヤーのためのSNS").font(.system(size: 20)).padding(.bottom, 30)
-            // ロゴ（仮アイコン）
-            Image(systemName: "cube.fill").font(.system(size: 80)).padding(
-                .bottom,
-                30
-            )
+            Spacer()
+            // アプリ名のロゴ（宝石＋Milestone）
+            TitleLogo(size: 48)
 
+            Text("Minecraft統合版プレイヤーのためのSNSとツール")
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(.appTextSecondary)
+                .padding(.top, 10)
+
+            Spacer()
             // Google のログインボタン
             Button {
                 Task { await authViewModel.signIn() }
@@ -53,11 +53,9 @@ struct LoginView: View {
             } label: {
                 Text("利用規約")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(
-                        Color(red: 31 / 255, green: 31 / 255, blue: 31 / 255)
-                    )
+                    .foregroundStyle(.white)
                     .frame(width: 300, height: 48)
-                    .background(.tint)
+                    .background(Color.accentColor)
                     .clipShape(Capsule())
             }
             .sheet(isPresented: $showSheet) {
@@ -65,9 +63,11 @@ struct LoginView: View {
             }
 
             // Minecraft の利用ガイドラインで必要な注意書き
-            Text("Minecraft 公式の製品ではありません。Mojang および Microsoft が承認・関与しているものではありません。")
+            Text(
+                "Minecraft 公式の製品ではありません。Mojang および Microsoft が承認・関与しているものではありません。"
+            )
             .font(.caption2)
-            .foregroundStyle(.secondary)  // 灰色
+            .foregroundStyle(.appTextSecondary)  // 控えめな文字色（ダークではうすい紫）
             .multilineTextAlignment(.center)  // 折り返した行も中央ぞろえ
             .frame(maxWidth: 300)
             .padding(.top, 24)  // 利用規約ボタンとの間をあける

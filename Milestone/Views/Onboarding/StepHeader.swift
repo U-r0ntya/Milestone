@@ -16,10 +16,11 @@ struct StepHeader: View {
             }
             Text(title)
                 .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(.appTextPrimary)
             if let subtitle {
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appTextSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

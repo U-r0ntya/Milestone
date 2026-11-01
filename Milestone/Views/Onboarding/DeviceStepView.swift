@@ -34,19 +34,20 @@ struct DeviceStepView: View {
                             .padding(.vertical, 20)
                             .contentShape(Rectangle())  // 行全体を押せるようにする
                         }
-                        .foregroundStyle(.primary)  // ボタンの文字を青ではなく普通の色に
+                        .foregroundStyle(.appTextPrimary)  // ボタンの文字を青ではなく、アプリの文字色に
 
                         // 最後の行以外は、下に区切り線を引く
                         if item != Device.allCases.last {
                             Divider()
+                                .overlay(Color.appCardBorder)  // うすい紫の区切り線
                         }
                     }
                 }
-                .background(Color(.systemBackground))  // 背景（ライトモードでは白）
+                .background(Color.appCard)  // 背景（ライトは白、ダークは濃い紫）
                 .clipShape(RoundedRectangle(cornerRadius: 16))  // 角を丸く切り抜く
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)  // 枠線
+                        .stroke(Color.appCardBorder, lineWidth: 1)  // 枠線（うすい紫）
                 )
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
@@ -54,17 +55,11 @@ struct DeviceStepView: View {
                 // 次へボタン（機種を選ぶまで押せない）
                 HStack {
                     Spacer()
-                    Button {
-                        onNext() 
-                    } label: {
-                        Text("次へ")
-                            .foregroundStyle(.white).bold()
-                            .font(.system(size: 24))
-                            .frame(width: 120, height: 48)
-                            .background(selectedDevice == nil ? Color.gray.opacity(0.4) : Color.accentColor)
-                            .clipShape(Capsule())
+                    Button("次へ") {
+                        onNext()
                     }
-                    .disabled(selectedDevice == nil)
+                    .buttonStyle(.primary)
+                    .disabled(selectedDevice == nil)   // 押せないときは、自動で灰色になる
                     .padding(.trailing, 24)
                 }
                 Spacer()
