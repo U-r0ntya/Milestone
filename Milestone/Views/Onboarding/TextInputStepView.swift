@@ -4,8 +4,8 @@ import SwiftUI
 struct TextInputStepView: View {
     @Binding var name: String
     @Binding var bio: String
-    let isSaving: Bool   // 保存中かどうか（親から受け取る）
-    
+    let isSaving: Bool  // 保存中かどうか（親から受け取る）
+
     let complete: () -> Void
     let onBack: () -> Void
 
@@ -22,7 +22,7 @@ struct TextInputStepView: View {
     private var trimmedBio: String {
         bio.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
+
     // 決定を押せるかどうか
     private var canGoNext: Bool {
         // 名前は空でなく上限以下、自己紹介は上限以下（空でもOK）
@@ -103,44 +103,35 @@ struct TextInputStepView: View {
                 .padding(.horizontal, 36)
                 .font(.subheadline)
                 .foregroundStyle(
-                    trimmedBio.count > bioMaxLength ? Color.red : Color.secondary
+                    trimmedBio.count > bioMaxLength
+                        ? Color.red : Color.secondary
                 )  // 超えたら赤
             }
             .padding(.bottom, 32)
             // 戻るボタンと決定ボタン（決定は入力が条件を満たすまで押せない）
             HStack {
                 // 戻るボタン
-                Button {
+                Button("戻る") {
                     onBack()
-                } label: {
-                    Text("戻る")
-                        .foregroundStyle(.white).bold()
-                        .font(.system(size: 24))
-                        .frame(width: 120, height: 48)
-                        .background(Color.accentColor)
-                        .clipShape(Capsule())
                 }
+                .buttonStyle(.secondary)
                 .padding(.leading, 24)
+
                 Spacer()
+
                 // 決定ボタン
                 Button {
                     complete()
                 } label: {
-                    Group {
-                        if isSaving {
-                            ProgressView()            // 保存中はくるくる
-                                .tint(.white)
-                        } else {
-                            Text("決定")
-                                .foregroundStyle(.white).bold()
-                                .font(.system(size: 24))
-                        }
+                    if isSaving {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("決定")
                     }
-                    .frame(width: 120, height: 48)
-                    .background(!canGoNext || isSaving ? Color.gray.opacity(0.2) : Color.accentColor)
-                    .clipShape(Capsule())
                 }
-                .disabled(!canGoNext || isSaving)     // 入力が足りないとき、または保存中は押せない
+                .buttonStyle(.primary)
+                .disabled(!canGoNext || isSaving)
                 .padding(.trailing, 24)
 
             }
@@ -151,5 +142,11 @@ struct TextInputStepView: View {
 #Preview {
     @Previewable @State var name = ""
     @Previewable @State var bio = ""
-    TextInputStepView(name: $name, bio: $bio,isSaving: false, complete: {}, onBack: {})
+    TextInputStepView(
+        name: $name,
+        bio: $bio,
+        isSaving: false,
+        complete: {},
+        onBack: {}
+    )
 }

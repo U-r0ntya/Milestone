@@ -54,17 +54,11 @@ struct DeviceStepView: View {
                 // 次へボタン（機種を選ぶまで押せない）
                 HStack {
                     Spacer()
-                    Button {
-                        onNext() 
-                    } label: {
-                        Text("次へ")
-                            .foregroundStyle(.white).bold()
-                            .font(.system(size: 24))
-                            .frame(width: 120, height: 48)
-                            .background(selectedDevice == nil ? Color.gray.opacity(0.4) : Color.accentColor)
-                            .clipShape(Capsule())
+                    Button("次へ") {
+                        onNext()
                     }
-                    .disabled(selectedDevice == nil)
+                    .buttonStyle(.primary)
+                    .disabled(selectedDevice == nil)   // 押せないときは、自動で灰色になる
                     .padding(.trailing, 24)
                 }
                 Spacer()
