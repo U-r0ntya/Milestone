@@ -5,7 +5,9 @@ import Foundation
 // 仮の API でも Firebase でも、この約束どおりに作れば画面からは同じように使える
 protocol PostRepository {
     func fetchTimeline() async throws -> [Post]
+    func savePost(_ post: Post) async throws
 }
+
 
 // 仮の API（Gist に置いた JSON）から取ってくる係
 struct MockAPIPostRepository: PostRepository {
@@ -14,6 +16,9 @@ struct MockAPIPostRepository: PostRepository {
         string:
             "https://gist.githubusercontent.com/U-r0ntya/8f58b8cc0e8cb733d6c09938ae56c2a7/raw/posts.json"
     )!
+    
+    // Gist には書き込めないので、何もしない
+    func savePost(_ post: Post) async throws {}
 
     func fetchTimeline() async throws -> [Post] {
         // 1. URL から JSON を取ってくる
@@ -59,4 +64,12 @@ struct FirestorePostRepository: PostRepository {
             fetchedPosts
             .filter { !$0.isReply }
     }
+    
+    func savePost(_ post: Post) async throws {
+        // 1. 場所を決める
+        let ref = db.collection("posts").document(post.id)
+        // 2. 書く
+        try ref.setData(from: post)
+    }
+
 }
