@@ -68,6 +68,27 @@
 - 投稿新規作成画面は、普通の投稿と返信の両方で使う。返信のときは返信先の投稿を上に出し、参加方法の欄を出さない。
 - 画面のラフ：[docs/画面のラフ.pdf](docs/画面のラフ.pdf)（手書き。細かいところは作りながら直す）
 
+### デザイン
+- コンセプト：白と濃い紫（ネザーポータル）に、エメラルドの差し色。落ち着いた高級感。Minecraft からは「色」だけを借り、形・アイコン・ロゴはオリジナル（公式のテクスチャ・ロゴ・スクリーンショットは使わない）
+- ロゴ：エメラルドの宝石。アプリアイコンは濃い紫の角丸の四角に宝石（文字なし）。タイトルは宝石＋「Mile（紫）stone（エメラルド）」の丸ゴシック（SF Pro Rounded）
+- タブバーは iOS 26 標準の浮かぶタブバー、各画面の上に濃い紫の帯
+- 色は Assets の Color Set（ライト／ダーク）で管理する
+
+| 名前 | ライト | ダーク | 使う場所 |
+|---|---|---|---|
+| AccentColor | #0F6E56 | #1D9E75 | メインのボタン、選んでいるタブ |
+| AppBackground | #FFFFFF | #1B1730 | 画面の背景 |
+| AppFrame | #26215C | #3C3489 | 上の帯 |
+| AppCard | #FFFFFF | #252040 | カード、一覧、入力欄 |
+| AppCardBorder | #CECBF6 | #332C58 | カードの枠線 |
+| AppTextPrimary | #26215C | #FFFFFF | 名前、タイトル |
+| AppTextSecondary | #5F5E5A | #BDB7DA | 本文、説明文 |
+| AppTagBackground | #E1F5EE | #085041 | 機種のラベルの背景 |
+| AppTagText | #085041 | #9FE1CB | 機種のラベルの文字 |
+| AppLike | #0F6E56 | #5DCAA5 | いいね |
+
+- ボタンは ButtonStyle（`.primary`：エメラルドのカプセル、`.secondary`：白いカプセルに紫の枠）、各画面の帯は ViewModifier（`.appHeader("タイトル")`）で共通化
+
 ## 5. データ
 すべて Firebase（Firestore）に置き、画像は Cloud Storage に置く。
 
@@ -261,6 +282,7 @@ level.dat の中の名前と値は、技術検証で自分のワールドを読�
   - [x] 2-4 タブバー（タイムライン／ワールド／プロフィールは仮の画面）`step/2-4-tabs`
     - 技術検証用のファイル（Views/TechCheck、ContentView）を削除。コードは `step/1-3-tech-check` ブランチに残っている
 - [ ] フェーズ3：タイムライン（仮の API → Firebase への差し替え）`step/3-1-timeline`
+  - [x] 3-0 デザインの土台（配色・ロゴ・アプリアイコン、ボタンと帯の部品、ログイン画面と初回設定への反映）`step/3-0-design-base`
 - [ ] フェーズ4：投稿新規作成と投稿の詳細 `step/4-1-post`
 - [ ] フェーズ5：返信・いいね `step/5-1-reply-like`
 - [ ] フェーズ6：ワールド（一覧、登録、level.dat、詳細）`step/6-1-world`
