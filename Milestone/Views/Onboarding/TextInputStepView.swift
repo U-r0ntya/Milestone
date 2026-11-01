@@ -42,12 +42,13 @@ struct TextInputStepView: View {
             // 名前の入力欄
             TextField("名前", text: $name)
                 .padding(.leading, 16)
-                .foregroundStyle(.primary).bold()
+                .foregroundStyle(.appTextPrimary).bold()
                 .font(.system(size: 24))
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 48)
-                .background(Color.gray.opacity(0.2))
+                .background(Color.appCard)
                 .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.appCardBorder, lineWidth: 1))  // うすい紫の枠
                 .padding(.horizontal, 24)
             // 名前の注意書き（上限を超えたらエラーに変わる）
             VStack(alignment: .leading) {
@@ -82,14 +83,15 @@ struct TextInputStepView: View {
                 if bio.isEmpty {
                     Text("サバイバルでのんびり遊んでいます")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.appTextSecondary)
                         .padding(.horizontal, 13)
                         .padding(.vertical, 16)
                         .allowsHitTesting(false)  // この文字をタップしても入力欄に届くように
                 }
             }
-            .background(Color.gray.opacity(0.2))
+            .background(Color.appCard)
             .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.appCardBorder, lineWidth: 1))  // うすい紫の枠
             .padding(.horizontal, 24)
             // 自己紹介の文字数（上限を超えたら赤）
             VStack(alignment: .leading) {
@@ -104,7 +106,7 @@ struct TextInputStepView: View {
                 .font(.subheadline)
                 .foregroundStyle(
                     trimmedBio.count > bioMaxLength
-                        ? Color.red : Color.secondary
+                        ? Color.red : Color.appTextSecondary
                 )  // 超えたら赤
             }
             .padding(.bottom, 32)

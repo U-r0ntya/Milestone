@@ -34,19 +34,20 @@ struct DeviceStepView: View {
                             .padding(.vertical, 20)
                             .contentShape(Rectangle())  // 行全体を押せるようにする
                         }
-                        .foregroundStyle(.primary)  // ボタンの文字を青ではなく普通の色に
+                        .foregroundStyle(.appTextPrimary)  // ボタンの文字を青ではなく、アプリの文字色に
 
                         // 最後の行以外は、下に区切り線を引く
                         if item != Device.allCases.last {
                             Divider()
+                                .overlay(Color.appCardBorder)  // うすい紫の区切り線
                         }
                     }
                 }
-                .background(Color(.systemBackground))  // 背景（ライトモードでは白）
+                .background(Color.appCard)  // 背景（ライトは白、ダークは濃い紫）
                 .clipShape(RoundedRectangle(cornerRadius: 16))  // 角を丸く切り抜く
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)  // 枠線
+                        .stroke(Color.appCardBorder, lineWidth: 1)  // 枠線（うすい紫）
                 )
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)

@@ -67,7 +67,7 @@ struct LoginView: View {
                 "Minecraft 公式の製品ではありません。Mojang および Microsoft が承認・関与しているものではありません。"
             )
             .font(.caption2)
-            .foregroundStyle(.secondary)  // 灰色
+            .foregroundStyle(.appTextSecondary)  // 控えめな文字色（ダークではうすい紫）
             .multilineTextAlignment(.center)  // 折り返した行も中央ぞろえ
             .frame(maxWidth: 300)
             .padding(.top, 24)  // 利用規約ボタンとの間をあける

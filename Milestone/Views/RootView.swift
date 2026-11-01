@@ -16,6 +16,8 @@ struct RootView: View {
                 MainTabView(authViewModel: authViewModel, user: user)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground)  // 画面全体の背景（ライトは白、ダークはくすんだ紫）
         .task {  // 画面が出たときに起動時チェックを呼ぶ
             await authViewModel.checkCurrentUser()
         }
