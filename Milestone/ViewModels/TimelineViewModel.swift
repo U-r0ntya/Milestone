@@ -29,8 +29,8 @@ final class TimelineViewModel {
 
         errorMessage = nil
         do {
-            let fetchedPosts: [Post] = try await repository.fetchTimeline()  // ①取ってくる
-            posts = fetchedPosts  // ② 成功したら入れる
+            let fetchedPosts: [Post] = try await repository.fetchTimeline()  // 取ってくる
+            posts = fetchedPosts  // 成功したら入れる
         } catch {
             errorMessage = "投稿を読み込めませんでした。通信状態を確かめて、もう一度試してください。"  //  失敗したら
         }
