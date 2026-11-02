@@ -5,12 +5,19 @@ struct MainTabView: View {
     let authViewModel: AuthViewModel
     let user: User  // ログイン中の人
 
+    @State private var isShowingDraftDialog = false  // 下書きのカードを出しているか
+    @AppStorage("composeDraftText") private var draftText = ""  // 投稿の画面と同じ下書き
+    @AppStorage("composeDraftTags") private var draftTags = ""
+
     var body: some View {
         TabView {
             // タイムライン
             NavigationStack {
-                TimelineView(user: user)  // ログイン中の人を渡す（投稿に使う）
-                    .appHeader("タイムライン")
+                TimelineView(
+                    user: user,
+                    isShowingDraftDialog: $isShowingDraftDialog
+                )  // ログイン中の人と、下書きのカードの値を渡す
+                .appHeader("タイムライン")
             }
             .tabItem {
                 Label("タイムライン", systemImage: "text.bubble")
@@ -32,6 +39,19 @@ struct MainTabView: View {
             }
             .tabItem {
                 Label("プロフィール", systemImage: "person")
+            }
+        }.overlay {
+            if isShowingDraftDialog {
+                DraftSaveDialog(
+                    onSave: {
+                        isShowingDraftDialog = false  // 下書きはもう保存されているので、閉じるだけ
+                    },
+                    onDelete: {
+                        draftText = ""  // 下書きを消す
+                        draftTags = ""
+                        isShowingDraftDialog = false
+                    }
+                )
             }
         }
     }

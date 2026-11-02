@@ -81,6 +81,7 @@
 | AppFrame | #26215C | #3C3489 | 上の帯 |
 | AppCard | #FFFFFF | #252040 | カード、一覧、入力欄 |
 | AppCardBorder | #CECBF6 | #332C58 | カードの枠線 |
+| AppDialog | #FFFFFF | #3C3489 | 画面の真ん中に出すカード（下書きの確認など）。ダークではボタン（AppCard）と見分けられるよう明るめ |
 | AppTextPrimary | #26215C | #FFFFFF | 名前、タイトル |
 | AppTextSecondary | #5F5E5A | #BDB7DA | 本文、説明文 |
 | AppTagBackground | #E1F5EE | #085041 | 機種のラベルの背景 |

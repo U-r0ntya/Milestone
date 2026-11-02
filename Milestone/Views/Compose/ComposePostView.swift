@@ -126,7 +126,7 @@ struct ComposePostView: View {
             .onChange(of: viewModel.tagsText) { _, newValue in
                 draftTags = newValue
             }.toolbar {
-                // // 左上：キャンセル（閉じるだけ。下書きを保存するかは、閉じたあとにタイムラインで聞く）
+                // 左上：キャンセル（閉じるだけ。下書きを保存するかは、閉じたあとにタイムラインで聞く）
                 ToolbarItem(placement: .cancellationAction) {
                     Button("キャンセル") {
                         dismiss()
@@ -151,6 +151,8 @@ struct ComposePostView: View {
                             Text("投稿")
                         }
                     }
+                    .buttonStyle(.glassProminent)  // 色付きのガラスのボタン
+                    .tint(Color.accentColor)  // 色はアプリカラー（エメラルド）
                     .disabled(!viewModel.canPost)
                 }
             }

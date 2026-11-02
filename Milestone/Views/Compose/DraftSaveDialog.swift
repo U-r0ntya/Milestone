@@ -44,9 +44,10 @@ struct DraftSaveDialog: View {
             }
             .padding(24)
             .frame(maxWidth: 280)
-            // ガラスのカード。アプリのカードの色を混ぜて、後ろが透けすぎないようにする
+            // ガラスのカード。ダイアログ用の色（ライトは白、ダークは明るめの紫）を混ぜて、後ろが透けすぎないようにする
+            // （ダークでも「削除」ボタンの背景 appCard と見分けられる色にしている）
             .glassEffect(
-                .regular.tint(Color.appCard.opacity(0.7)),
+                .regular.tint(Color("AppDialog").opacity(0.7)),
                 in: .rect(cornerRadius: 28)
             )
             .padding(.horizontal, 24)
