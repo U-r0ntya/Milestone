@@ -5,7 +5,6 @@ struct TimelineView: View {
     let user: User  // ログイン中の人（投稿するときに使う）
     @State private var viewModel = TimelineViewModel()
 
-    @State private var isBottomRefreshing = false  // 下の更新の途中かどうか
     @State private var isShowingCompose = false  // 投稿の画面を開いているか
     @Binding var isShowingDraftDialog: Bool  // 下書きのカードを出しているか（MainTabView から借りる）
     @AppStorage("composeDraftText") private var draftText = ""  // 投稿の画面と同じ名前（キー）なので、同じ下書きを読む
@@ -78,18 +77,21 @@ struct TimelineView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // 一番下の目印：画面に入ったら更新する（くるくるもここに出す）
-                    ProgressView()
-                        .frame(height: 32)
-                        .opacity(isBottomRefreshing ? 1 : 0)  // 場所はいつも取っておいて、更新中だけ見せる
-                        .onAppear {
-                            guard !isBottomRefreshing else { return }
-                            Task {
-                                isBottomRefreshing = true  // くるくるを見せる
-                                await viewModel.loadPosts()
-                                isBottomRefreshing = false  // 取得が終わったら隠す
+                    // 一番下の目印：画面に入ったら、古い投稿の続きを読み込む
+                    if viewModel.hasMore {
+                        ProgressView()
+                            .frame(height: 32)
+                            .opacity(viewModel.isLoadingMore ? 1 : 0)  // 場所はいつも取っておいて、読み込み中だけ見せる
+                            .onAppear {
+                                Task { await viewModel.loadMorePosts() }
                             }
-                        }
+                    } else {
+                        // もう続きがないとき
+                        Text("これ以上の投稿はありません")
+                            .font(.footnote)
+                            .foregroundStyle(.appTextSecondary)
+                            .frame(height: 32)
+                    }
                 }
                 .padding(.top, 8)
                 .padding(.horizontal, 8)
