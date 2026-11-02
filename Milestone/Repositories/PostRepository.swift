@@ -5,6 +5,7 @@ import Foundation
 // 仮の API でも Firebase でも、この約束どおりに作れば画面からは同じように使える
 protocol PostRepository {
     func fetchTimeline() async throws -> [Post]
+    func fetchReplies(postId: String) async throws -> [Post]  // ← 追加：ある投稿への返信を取ってくる
     func savePost(_ post: Post) async throws
 }
 
@@ -42,6 +43,10 @@ struct MockAPIPostRepository: PostRepository {
             .filter { !$0.isReply }
             .sorted { $0.createdAt > $1.createdAt }
     }
+    // 今は使っていないので、返信はなし
+    func fetchReplies(postId: String) async throws -> [Post] {
+        []
+    }
 }
 
 // Firestore から取ってくる係
@@ -49,27 +54,41 @@ struct FirestorePostRepository: PostRepository {
     let db = Firestore.firestore()
 
     func fetchTimeline() async throws -> [Post] {
-        // ① posts を新しい順に50件取ってくる（決まった形）
+        // posts を新しい順に50件取ってくる（決まった形）
         let snapshot = try await db.collection("posts")
             .order(by: "createdAt", descending: true)
             .limit(to: 50)
             .getDocuments()
 
-        // ② 1件ずつ Post に変える
+        // 1件ずつ Post に変える
         let fetchedPosts = try snapshot.documents.map {
             try $0.data(as: Post.self)
         }
-        // ③ 返信を除いて返す
+        // 返信を除いて返す
         return
             fetchedPosts
             .filter { !$0.isReply }
     }
     
     func savePost(_ post: Post) async throws {
-        // 1. 場所を決める
+        // 場所を決める
         let ref = db.collection("posts").document(post.id)
-        // 2. 書く
+        // 書く
         try ref.setData(from: post)
+    }
+    
+    func fetchReplies(postId: String) async throws -> [Post] {
+        // この投稿への返信だけを取ってくる（決まった形）
+        let snapshot = try await db.collection("posts")
+            .whereField("replyToPostId", isEqualTo: postId)
+            .getDocuments()
+
+        // 1件ずつ Post に変える
+        let fetchedReplies = try snapshot.documents.map {
+            try $0.data(as: Post.self)
+        }
+        // 古い順に並べて返す
+        return fetchedReplies.sorted { $0.createdAt < $1.createdAt }
     }
 
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 // 投稿（返信も同じ型）
-struct Post: Codable, Identifiable {
+struct Post: Codable, Identifiable, Hashable {
     let id: String
     let userId: String
     let replyToPostId: String?
