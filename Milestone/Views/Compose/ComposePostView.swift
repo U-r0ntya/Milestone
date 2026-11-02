@@ -8,6 +8,8 @@ struct ComposePostView: View {
     @State private var viewModel = ComposePostViewModel()
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための機能
     @FocusState private var isTextFocused: Bool  // 本文の入力欄にフォーカスがあるか
+    @FocusState private var isTagFocused: Bool  // タグの入力欄にフォーカスがあるか
+    @State private var isShowingTagInput = false  // タグの入力欄を出しているか
     // 下書き（アプリを閉じても残る）
     @AppStorage("composeDraftText") private var draftText = ""
     
@@ -19,10 +21,16 @@ struct ComposePostView: View {
             } label: {
                 Image(systemName: "photo")
             }
-            // タグ
+            // タグ（押すたびに、タグの入力欄を出す・隠す）
             Button {
+                isShowingTagInput.toggle()
+                if isShowingTagInput {
+                    isTagFocused = true   // 出したら、タグの入力欄にフォーカス
+                } else {
+                    isTextFocused = true  // 隠したら、本文の入力欄に戻す
+                }
             } label: {
-                Image(systemName: "number")
+                Image(systemName: isShowingTagInput ? "number.circle.fill" : "number")  // 出しているあいだは塗りつぶし
             }
             // ワールド
             Button {
@@ -52,6 +60,48 @@ struct ComposePostView: View {
         }
     }
     
+    // タグの入力欄（タグボタンを押すと、道具の列のすぐ上に出る）
+    private var tagInputRow: some View {
+        HStack(spacing: 12) {
+            TextField("タグを入力（例：建築）", text: $viewModel.tagInput)
+                .focused($isTagFocused)
+                .submitLabel(.done)  // キーボードの改行キーを「完了」にする
+                .onSubmit {
+                    viewModel.addTag()
+                    isTagFocused = true  // 続けて入力できるように、入力欄から外さない
+                }
+                .foregroundStyle(.appTextPrimary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color.appCard)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(Color.appCardBorder, lineWidth: 1)  // うすい紫の枠
+                )
+
+            // 付けた数（例：2/5）
+            Text("\(viewModel.selectedTags.count)/\(viewModel.tagMaxCount)")
+                .font(.caption)
+                .foregroundStyle(.appTextSecondary)
+
+            // 追加（押せないときは自動で灰色になる）
+            Button("追加") {
+                viewModel.addTag()
+            }
+            .buttonStyle(.glassProminent)
+            .tint(Color.accentColor)
+            .disabled(!viewModel.canAddTag)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.appBackground)
+        .overlay(alignment: .top) {
+            Divider()
+                .overlay(Color.appCardBorder)  // 上に、うすい紫の区切り線
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
@@ -86,6 +136,35 @@ struct ComposePostView: View {
                     }
                 }
                 
+                // 付けたタグ（× で外せる。多いときは横にスクロール）
+                if !viewModel.selectedTags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(viewModel.selectedTags, id: \.self) { tag in
+                                HStack(spacing: 4) {
+                                    Text("#\(tag)")
+                                    Button {
+                                        viewModel.removeTag(tag)
+                                        
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                    }
+                                }
+                                .font(.footnote)
+                                .foregroundStyle(.appTextSecondary)
+                                .padding(.leading, 10)
+                                .padding(.trailing, 6)
+                                .padding(.vertical, 4)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.appCardBorder, lineWidth: 1)  // タイムラインのタグと同じ、うすい紫の枠
+                                )
+                            }
+                        }
+                        .padding(1)  // 枠線のはしが切れないように
+                    }
+                }
+
                 // 文字数（300文字をこえたら赤）
                 Text(
                     "\(viewModel.trimmedText.count) / \(viewModel.textMaxLength)"
@@ -109,7 +188,13 @@ struct ComposePostView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.appBackground)
             .safeAreaInset(edge: .bottom) {
-                toolRow  // 画面の一番下に置く（キーボードが出たら、キーボードのすぐ上に上がる）
+                // 画面の一番下に置く（キーボードが出たら、キーボードのすぐ上に上がる）
+                VStack(spacing: 0) {
+                    if isShowingTagInput {
+                        tagInputRow  // タグの入力欄（タグボタンを押したときだけ）
+                    }
+                    toolRow
+                }
             }
             .navigationTitle("新規投稿")
             .navigationBarTitleDisplayMode(.inline)

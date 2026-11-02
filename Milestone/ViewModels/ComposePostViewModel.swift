@@ -9,7 +9,38 @@ final class ComposePostViewModel {
     var isPosting = false  // 保存中か
     var errorMessage: String? = nil
 
- 
+    var tagInput = ""  // タグの入力欄の文字
+    var selectedTags: [String] = []  // 付けたタグ（投稿に入れるもの）
+
+    let tagMaxCount = 5  // 付けられるタグの最大数
+    let textMaxLength = 300  // 本文の最大文字数
+
+    // タグの入力欄の前後の空白と、前後の「#」を取り除いたもの（「 #建築 」→「建築」）
+    var trimmedTagInput: String {
+        tagInput
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "#＃"))
+    }
+
+    // 「追加」を押せるか（空ではない・まだ5個に届いていない・同じタグがまだない）
+    var canAddTag: Bool {
+        !trimmedTagInput.isEmpty
+            && selectedTags.count < tagMaxCount
+            && !selectedTags.contains(trimmedTagInput)
+    }
+
+    // タグを追加する
+    func addTag() {
+        guard canAddTag else { return }
+        selectedTags.append(trimmedTagInput)  // 付けたタグの後ろに足す
+        tagInput = ""  // 入力欄を空にする
+    }
+
+    // タグを外す（同じ名前のものを消す）
+    func removeTag(_ tag: String) {
+        selectedTags.removeAll { $0 == tag }
+        
+    }
 
     private let repository: PostRepository
 
@@ -45,7 +76,7 @@ final class ComposePostViewModel {
             text: trimmedText,
             imageURLs: [],  // 画像はあとで
             createdAt: Date(),  // 今の日時
-            tags: [],  // タグはあとで（タグの入力を作るときに入れる）
+            tags: selectedTags,  // 付けたタグ
             replyCount: 0,
             likeCount: 0,
             userName: user.name,  // ログイン中の人の情報をコピー
