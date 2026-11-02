@@ -7,7 +7,6 @@ struct MainTabView: View {
 
     @State private var isShowingDraftDialog = false  // 下書きのカードを出しているか
     @AppStorage("composeDraftText") private var draftText = ""  // 投稿の画面と同じ下書き
-    @AppStorage("composeDraftTags") private var draftTags = ""
 
     var body: some View {
         TabView {
@@ -48,7 +47,6 @@ struct MainTabView: View {
                     },
                     onDelete: {
                         draftText = ""  // 下書きを消す
-                        draftTags = ""
                         isShowingDraftDialog = false
                     }
                 )

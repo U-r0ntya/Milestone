@@ -6,7 +6,6 @@ import Observation
 final class ComposePostViewModel {
     // 画面が見る値
     var text = ""                    // 本文
-    var tagsText = ""                // タグ（「建築 村」のようにスペースで区切って入力）
     var isPosting = false            // 保存中か
     var errorMessage: String? = nil
 
@@ -33,13 +32,6 @@ final class ComposePostViewModel {
         !trimmedText.isEmpty && trimmedText.count <= textMaxLength && !isPosting
     }
 
-    // タグを配列にする（決まった形）
-    var tags: [String] {
-        tagsText
-            .split(whereSeparator: { $0 == " " || $0 == "　" || $0 == "," || $0 == "、" })
-            .map { String($0) }
-    }
-
     // 投稿する
     func post(user: User) async -> Bool {
         guard canPost else { return false }
@@ -53,7 +45,7 @@ final class ComposePostViewModel {
             text: trimmedText,
             imageURLs: [],                     // 画像はあとで
             createdAt: Date(),                 // 今の日時
-            tags: tags,
+            tags: [],  // タグはあとで（タグの入力を作るときに入れる）
             replyCount: 0,
             likeCount: 0,
             userName: user.name,               // ログイン中の人の情報をコピー

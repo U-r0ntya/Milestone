@@ -4,14 +4,13 @@ import SwiftUI
 struct ComposePostView: View {
     let user: User  // 投稿する人（ログイン中の人）
     let onPosted: () -> Void  // 投稿できたときの処理（タイムラインの読み直し）
-
+    
     @State private var viewModel = ComposePostViewModel()
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための機能
     @FocusState private var isTextFocused: Bool  // 本文の入力欄にフォーカスがあるか
     // 下書き（アプリを閉じても残る）
     @AppStorage("composeDraftText") private var draftText = ""
-    @AppStorage("composeDraftTags") private var draftTags = ""
-
+    
     // キーボードの上の道具の列（押したときの機能は、あとで作る）
     private var toolRow: some View {
         HStack(spacing: 40) {
@@ -52,7 +51,7 @@ struct ComposePostView: View {
                 .overlay(Color.appCardBorder)  // 上に、うすい紫の区切り線
         }
     }
-
+    
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
@@ -62,12 +61,12 @@ struct ComposePostView: View {
                         .resizable()
                         .frame(width: 40, height: 40)
                         .foregroundStyle(.appCardBorder)
-
+                    
                     VStack(alignment: .leading, spacing: 4) {
                         Text(user.name)
                             .font(.subheadline.bold())
                             .foregroundStyle(.appTextPrimary)
-
+                        
                         // 本文（空のときだけ、うすい文字の案内を出す）
                         ZStack(alignment: .topLeading) {
                             if viewModel.text.isEmpty {
@@ -86,7 +85,7 @@ struct ComposePostView: View {
                         }
                     }
                 }
-
+                
                 // 文字数（300文字をこえたら赤）
                 Text(
                     "\(viewModel.trimmedText.count) / \(viewModel.textMaxLength)"
@@ -94,17 +93,17 @@ struct ComposePostView: View {
                 .font(.caption)
                 .foregroundStyle(
                     viewModel.trimmedText.count > viewModel.textMaxLength
-                        ? .red : .appTextSecondary
+                    ? .red : .appTextSecondary
                 )
                 .frame(maxWidth: .infinity, alignment: .trailing)
-
+                
                 // エラー
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                         .font(.footnote)
                         .foregroundStyle(.red)
                 }
-
+                
             }
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -116,16 +115,13 @@ struct ComposePostView: View {
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {  // 画面を開いたら実行
                 viewModel.text = draftText
-                viewModel.tagsText = draftTags
                 isTextFocused = true  // 画面が開いたら、本文の入力欄にフォーカスを当てる（キーボードが出る）
             }
             // 入力するたびに下書きに保存する（閉じ方に関係なく、いつも最新が残る）
             .onChange(of: viewModel.text) { _, newValue in
                 draftText = newValue
             }
-            .onChange(of: viewModel.tagsText) { _, newValue in
-                draftTags = newValue
-            }.toolbar {
+            .toolbar {
                 // 左上：キャンセル（閉じるだけ。下書きを保存するかは、閉じたあとにタイムラインで聞く）
                 ToolbarItem(placement: .cancellationAction) {
                     Button("キャンセル") {
@@ -140,7 +136,6 @@ struct ComposePostView: View {
                             if await viewModel.post(user: user) {
                                 onPosted()
                                 viewModel.text = ""
-                                viewModel.tagsText = ""
                                 dismiss()
                             }
                         }
@@ -156,7 +151,7 @@ struct ComposePostView: View {
                     .disabled(!viewModel.canPost)
                 }
             }
-        }
+        }  // NavigationStack の終わり
         .interactiveDismissDisabled(viewModel.isPosting)  // 保存中は、下にスワイプして閉じられないようにする
     }
 }
