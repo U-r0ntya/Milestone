@@ -2,32 +2,52 @@ import SwiftUI
 
 // タイムライン：投稿の一覧（新しい順）と、投稿ボタン
 struct TimelineView: View {
+    let user: User  // ログイン中の人（投稿するときに使う）
     @State private var viewModel = TimelineViewModel()
 
     @State private var isBottomRefreshing = false  // 下の更新の途中かどうか
+    @State private var isShowingCompose = false  // 投稿の画面を開いているか
+    @Binding var isShowingDraftDialog: Bool  // 下書きのカードを出しているか（MainTabView から借りる）
+    @AppStorage("composeDraftText") private var draftText = ""  // 投稿の画面と同じ名前（キー）なので、同じ下書きを読む
 
     var body: some View {
         // 一覧の上に、右下の投稿ボタンを重ねる
         ZStack(alignment: .bottomTrailing) {
             content
 
-            // 投稿ボタン（フェーズ4で投稿新規作成の画面を開く）
+            // 投稿ボタン（投稿新規作成の画面を開く）
             Button {
-                // フェーズ4で作る
+                isShowingCompose = true
             } label: {
                 Image(systemName: "plus")
                     .font(.title2.bold())
                     .foregroundStyle(.white)
                     .frame(width: 56, height: 56)
-                    .background(Color.accentColor)
-                    .clipShape(Circle())
-                    .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                    .glassEffect(
+                        .regular.tint(Color.accentColor).interactive(),
+                        in: .circle
+                    )  // エメラルド色のガラスの丸
             }
             .padding(.trailing, 20)
             .padding(.bottom, 16)
         }
         .task {
             await viewModel.loadPosts()  // 画面を開いたときに読み込む
+        }
+        .sheet(
+            isPresented: $isShowingCompose,
+            onDismiss: {
+                // 閉じたあとに本文が残っていたら（キャンセル・スワイプ）、保存するか聞く
+                if !draftText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
+                {
+                    isShowingDraftDialog = true
+                }
+            }
+        ) {
+            ComposePostView(user: user) {
+                Task { await viewModel.loadPosts() }
+            }
         }
     }
 
@@ -99,7 +119,16 @@ struct TimelineView: View {
 
 #Preview {
     NavigationStack {
-        TimelineView()
-            .appHeader("タイムライン")
+        TimelineView(
+            user: User(
+                id: "preview",
+                name: "すてぃーぶ",
+                iconURL: nil,
+                device: .nintendoSwitch,
+                bio: nil
+            ),
+            isShowingDraftDialog: .constant(false)
+        )
+        .appHeader("タイムライン")
     }
 }

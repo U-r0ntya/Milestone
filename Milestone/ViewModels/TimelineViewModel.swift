@@ -13,7 +13,7 @@ final class TimelineViewModel {
 
     // AuthViewModel と同じ2つの init（理由も同じで、MainActor の都合）
     init() {
-        self.repository = MockAPIPostRepository()
+        self.repository = FirestorePostRepository()
     }
 
     init(repository: PostRepository) {
