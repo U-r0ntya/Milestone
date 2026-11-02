@@ -31,6 +31,10 @@ struct TimelineView: View {
             .padding(.trailing, 20)
             .padding(.bottom, 16)
         }
+        // NavigationLink で渡された投稿を受け取って、詳細の画面を出す
+        .navigationDestination(for: Post.self) { post in
+            PostDetailView(post: post)
+        }
         .task {
             await viewModel.loadPosts()  // 画面を開いたときに読み込む
         }
@@ -67,7 +71,11 @@ struct TimelineView: View {
                     }
 
                     ForEach(viewModel.posts) { post in
-                        PostRowView(post: post)
+                        // カードをタップすると、投稿の詳細に進む
+                        NavigationLink(value: post) {
+                            PostRowView(post: post)
+                        }
+                        .buttonStyle(.plain)
                     }
 
                     // 一番下の目印：画面に入ったら更新する（くるくるもここに出す）
