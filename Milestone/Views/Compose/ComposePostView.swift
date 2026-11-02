@@ -3,11 +3,14 @@ import SwiftUI
 // 投稿新規作成（タイムラインの＋ボタンから、シートで開く）
 struct ComposePostView: View {
     let user: User  // 投稿する人（ログイン中の人）
-    let onPosted: () -> Void  // 投稿できたときの処理（親が決める。タイムラインの読み直しなど）
+    let onPosted: () -> Void  // 投稿できたときの処理（タイムラインの読み直し）
 
     @State private var viewModel = ComposePostViewModel()
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための機能
     @FocusState private var isTextFocused: Bool  // 本文の入力欄にフォーカスがあるか
+    // 下書き（アプリを閉じても残る）
+    @AppStorage("composeDraftText") private var draftText = ""
+    @AppStorage("composeDraftTags") private var draftTags = ""
 
     // キーボードの上の道具の列（押したときの機能は、あとで作る）
     private var toolRow: some View {
@@ -102,7 +105,6 @@ struct ComposePostView: View {
                         .foregroundStyle(.red)
                 }
 
-                Spacer()
             }
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -112,11 +114,19 @@ struct ComposePostView: View {
             }
             .navigationTitle("新規投稿")
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
+            .onAppear {  // 画面を開いたら実行
+                viewModel.text = draftText
+                viewModel.tagsText = draftTags
                 isTextFocused = true  // 画面が開いたら、本文の入力欄にフォーカスを当てる（キーボードが出る）
             }
-            .toolbar {
-                // 左上：キャンセル
+            // 入力するたびに下書きに保存する（閉じ方に関係なく、いつも最新が残る）
+            .onChange(of: viewModel.text) { _, newValue in
+                draftText = newValue
+            }
+            .onChange(of: viewModel.tagsText) { _, newValue in
+                draftTags = newValue
+            }.toolbar {
+                // // 左上：キャンセル（閉じるだけ。下書きを保存するかは、閉じたあとにタイムラインで聞く）
                 ToolbarItem(placement: .cancellationAction) {
                     Button("キャンセル") {
                         dismiss()
@@ -129,6 +139,8 @@ struct ComposePostView: View {
                             // 保存できたら、親に知らせてシートを閉じる。失敗したら閉じずにエラーを見せる
                             if await viewModel.post(user: user) {
                                 onPosted()
+                                viewModel.text = ""
+                                viewModel.tagsText = ""
                                 dismiss()
                             }
                         }

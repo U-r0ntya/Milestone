@@ -4,12 +4,12 @@ import SwiftUI
 struct MainTabView: View {
     let authViewModel: AuthViewModel
     let user: User  // ログイン中の人
-    
+
     var body: some View {
         TabView {
             // タイムライン
             NavigationStack {
-                TimelineView()
+                TimelineView(user: user)  // ログイン中の人を渡す（投稿に使う）
                     .appHeader("タイムライン")
             }
             .tabItem {
