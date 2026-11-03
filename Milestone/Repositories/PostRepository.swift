@@ -8,6 +8,8 @@ protocol PostRepository {
     func fetchOlderPosts(before date: Date) async throws -> [Post]  // ← 追加：この日時より古い投稿を取ってくる
     func fetchReplies(postId: String) async throws -> [Post]
     func savePost(_ post: Post) async throws
+    /// 返信を保存し、元の投稿の replyCount を 1 増やす
+    func saveReply(_ reply: Post, parentId: String) async throws
 }
 
 // 仮の API（Gist に置いた JSON）から取ってくる係
@@ -50,6 +52,9 @@ struct MockAPIPostRepository: PostRepository {
     // Gist は全部を1回で返すので、続きはない
     func fetchOlderPosts(before date: Date) async throws -> [Post] {
         []
+    }
+    func saveReply(_ reply: Post, parentId: String) async throws {
+        // Mock は保存しない（savePost と同じ扱い）
     }
 }
 
@@ -109,5 +114,23 @@ struct FirestorePostRepository: PostRepository {
         // 返信も含めたまま返す（返信を除くのは ViewModel でする。
         // 返信だけの回があっても「もう続きがない」とまちがえないように、返信の日時も使うため）
         return fetchedPosts
+    }
+    func saveReply(_ reply: Post, parentId: String) async throws {
+        // 返信を書き込む予定に入れる
+        let batch = db.batch()
+
+        // 返信を書き込む場所を決める（まだ通信しない）
+        let replyRef = db.collection("posts").document(reply.id)
+        // from:何を書くか、forDocument:どこのドキュメントに書くか
+        try batch.setData(from: reply, forDocument: replyRef)
+
+        // 元の投稿の replyCount を +1 する予定に入れる
+        let parentRef = db.collection("posts").document(parentId)
+        //.updateData:この辞書に書いたフィールドだけを書きかえ
+        // FieldValue.increment(...):今の値に足す(increment の引数の型は Int64)
+        batch.updateData(["replyCount": FieldValue.increment(Int64(1))], forDocument: parentRef)
+
+        // 予定に入れた2つを、まとめて書き込む
+        try await batch.commit()
     }
 }
