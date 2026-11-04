@@ -128,7 +128,7 @@ struct ComposePostView: View {
                         // 本文（空のときだけ、うすい文字の案内を出す）
                         ZStack(alignment: .topLeading) {
                             if viewModel.text.isEmpty {
-                                Text("いまどうしてる？")
+                                Text(replyTo == nil ? "いまどうしてる？" : "返信する")
                                     .foregroundStyle(
                                         Color.appTextSecondary.opacity(0.6)
                                     )
@@ -204,7 +204,7 @@ struct ComposePostView: View {
                     toolRow
                 }
             }
-            .navigationTitle("新規投稿")
+            .navigationTitle(replyTo == nil ? "新規投稿" : "返信")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {  // 画面を開いたら実行
                 viewModel.text = draftText
@@ -236,7 +236,7 @@ struct ComposePostView: View {
                         if viewModel.isPosting {
                             ProgressView()
                         } else {
-                            Text("投稿")
+                            Text(replyTo == nil ? "投稿" : "返信")
                         }
                     }
                     .buttonStyle(.glassProminent)  // 色付きのガラスのボタン
