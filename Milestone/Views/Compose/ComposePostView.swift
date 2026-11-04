@@ -3,15 +3,23 @@ import SwiftUI
 // 投稿新規作成（タイムラインの＋ボタンから、シートで開く）
 struct ComposePostView: View {
     let user: User  // 投稿する人（ログイン中の人）
+    let replyTo: Post? // 投稿元を持つプロパティ（nil なら新規投稿）
     let onPosted: () -> Void  // 投稿できたときの処理（タイムラインの読み直し）
     
-    @State private var viewModel = ComposePostViewModel()
+    @State private var viewModel: ComposePostViewModel
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための機能
     @FocusState private var isTextFocused: Bool  // 本文の入力欄にフォーカスがあるか
     @FocusState private var isTagFocused: Bool  // タグの入力欄にフォーカスがあるか
     @State private var isShowingTagInput = false  // タグの入力欄を出しているか
     // 下書き（アプリを閉じても残る）
     @AppStorage("composeDraftText") private var draftText = ""
+    
+    init(user: User, replyTo: Post? = nil, onPosted: @escaping () -> Void) {
+        self.user = user
+        self.replyTo = replyTo
+        self.onPosted = onPosted
+        _viewModel = State(initialValue:ComposePostViewModel(replyToPostId: replyTo?.id))
+    }
     
     // キーボードの上の道具の列（押したときの機能は、あとで作る）
     private var toolRow: some View {
