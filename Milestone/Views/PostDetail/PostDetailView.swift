@@ -1,11 +1,12 @@
 import SwiftUI
 
 // 投稿の詳細：投稿の全体と、その投稿への返信の一覧（古い順）
-// 返信を書く・いいねを押すのはフェーズ5で作る
+
 struct PostDetailView: View {
     let user: User  // 返信する人（ログイン中の人）
 
     @State private var viewModel: PostDetailViewModel
+    @State private var isShowingReply = false  // 返信のシートを出しているか
 
     // どの投稿の詳細かを受け取って、その投稿用の ViewModel を作る
     init(user: User, post: Post) {
@@ -48,6 +49,12 @@ struct PostDetailView: View {
             await viewModel.loadReplies()  // 画面を開いたときに返信を読み込む
         }
         .appHeader("投稿")
+        .sheet(isPresented: $isShowingReply) {
+            ComposePostView(
+                user: user,
+                replyTo: viewModel.post
+            ) { Task { await viewModel.loadReplies() } }
+        }
     }
 
     // 投稿の全体（タイムラインのカードより大きく、全部の情報を出す）
@@ -123,9 +130,13 @@ struct PostDetailView: View {
 
             // 返信数・いいね数（今は表示だけ。押せるのはフェーズ5）
             HStack(spacing: 20) {
-                HStack(spacing: 4) {
-                    Image(systemName: "bubble.right")
-                    Text("\(post.replyCount)")
+                Button {
+                    isShowingReply = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "bubble.right")
+                        Text("\(post.replyCount)")
+                    }.buttonStyle(.plain)
                 }
                 HStack(spacing: 4) {
                     Image(systemName: "heart")
