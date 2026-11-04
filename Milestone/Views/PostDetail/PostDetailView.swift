@@ -44,16 +44,23 @@ struct PostDetailView: View {
         }
         .refreshable {
             await viewModel.loadReplies()  // 引っ張って返信を読み直す
+            await viewModel.reloadPost()
         }
         .task {
             await viewModel.loadReplies()  // 画面を開いたときに返信を読み込む
+            await viewModel.reloadPost()
         }
         .appHeader("投稿")
         .sheet(isPresented: $isShowingReply) {
             ComposePostView(
                 user: user,
                 replyTo: viewModel.post
-            ) { Task { await viewModel.loadReplies() } }
+            ) {
+                Task {
+                    await viewModel.loadReplies()
+                    await viewModel.reloadPost()
+                }
+            }
         }
     }
 
