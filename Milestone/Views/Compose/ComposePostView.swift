@@ -3,9 +3,9 @@ import SwiftUI
 // 投稿新規作成（タイムラインの＋ボタンから、シートで開く）
 struct ComposePostView: View {
     let user: User  // 投稿する人（ログイン中の人）
-    let replyTo: Post? // 投稿元を持つプロパティ（nil なら新規投稿）
+    let replyTo: Post?  // 投稿元を持つプロパティ（nil なら新規投稿）
     let onPosted: () -> Void  // 投稿できたときの処理（タイムラインの読み直し）
-    
+
     @State private var viewModel: ComposePostViewModel
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための機能
     @FocusState private var isTextFocused: Bool  // 本文の入力欄にフォーカスがあるか
@@ -13,21 +13,27 @@ struct ComposePostView: View {
     @State private var isShowingTagInput = false  // タグの入力欄を出しているか
     // 下書き（アプリを閉じても残る）
     @AppStorage private var draftText: String
-    
+
     init(user: User, replyTo: Post? = nil, onPosted: @escaping () -> Void) {
         self.user = user
         self.replyTo = replyTo
         self.onPosted = onPosted
-        _viewModel = State(initialValue:ComposePostViewModel(replyToPostId: replyTo?.id))
+        _viewModel = State(
+            initialValue: ComposePostViewModel(replyToPostId: replyTo?.id))
+        _draftText = AppStorage(wrappedValue: "", Self.draftKey(for: replyTo))
+    }
+
+    static func draftKey(for replyTo: Post?) -> String {
         if let replyTo {
             // 返信先の投稿ごとに下書きを登録しておく
-            _draftText = AppStorage(wrappedValue: "", "replyDraft_\(replyTo.id)" )
-        }else{
+            return "replyDraft_\(replyTo.id)"
+
+        } else {
             // 投稿するだけなので、登録先は一つ
-            _draftText = AppStorage(wrappedValue: "", "composeDraftText")
+            return "composeDraftText"
         }
     }
-    
+
     // キーボードの上の道具の列（押したときの機能は、あとで作る）
     private var toolRow: some View {
         HStack(spacing: 40) {
@@ -40,12 +46,15 @@ struct ComposePostView: View {
             Button {
                 isShowingTagInput.toggle()
                 if isShowingTagInput {
-                    isTagFocused = true   // 出したら、タグの入力欄にフォーカス
+                    isTagFocused = true  // 出したら、タグの入力欄にフォーカス
                 } else {
                     isTextFocused = true  // 隠したら、本文の入力欄に戻す
                 }
             } label: {
-                Image(systemName: isShowingTagInput ? "number.circle.fill" : "number")  // 出しているあいだは塗りつぶし
+                Image(
+                    systemName: isShowingTagInput
+                        ? "number.circle.fill" : "number"
+                )  // 出しているあいだは塗りつぶし
             }
             // ワールド
             Button {
@@ -74,7 +83,7 @@ struct ComposePostView: View {
                 .overlay(Color.appCardBorder)  // 上に、うすい紫の区切り線
         }
     }
-    
+
     // タグの入力欄（タグボタンを押すと、道具の列のすぐ上に出る）
     private var tagInputRow: some View {
         HStack(spacing: 12) {
@@ -182,12 +191,12 @@ struct ComposePostView: View {
                         .resizable()
                         .frame(width: 40, height: 40)
                         .foregroundStyle(.appCardBorder)
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text(user.name)
                             .font(.subheadline.bold())
                             .foregroundStyle(.appTextPrimary)
-                        
+
                         // 本文（空のときだけ、うすい文字の案内を出す）
                         ZStack(alignment: .topLeading) {
                             if viewModel.text.isEmpty {
@@ -206,7 +215,7 @@ struct ComposePostView: View {
                         }
                     }
                 }
-                
+
                 // 付けたタグ（× で外せる。多いときは横にスクロール）
                 if !viewModel.selectedTags.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -216,7 +225,7 @@ struct ComposePostView: View {
                                     Text("#\(tag)")
                                     Button {
                                         viewModel.removeTag(tag)
-                                        
+
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
                                     }
@@ -228,7 +237,10 @@ struct ComposePostView: View {
                                 .padding(.vertical, 4)
                                 .overlay(
                                     Capsule()
-                                        .stroke(Color.appCardBorder, lineWidth: 1)  // タイムラインのタグと同じ、うすい紫の枠
+                                        .stroke(
+                                            Color.appCardBorder,
+                                            lineWidth: 1
+                                        )  // タイムラインのタグと同じ、うすい紫の枠
                                 )
                             }
                         }
@@ -243,17 +255,17 @@ struct ComposePostView: View {
                 .font(.caption)
                 .foregroundStyle(
                     viewModel.trimmedText.count > viewModel.textMaxLength
-                    ? .red : .appTextSecondary
+                        ? .red : .appTextSecondary
                 )
                 .frame(maxWidth: .infinity, alignment: .trailing)
-                
+
                 // エラー
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
                         .font(.footnote)
                         .foregroundStyle(.red)
                 }
-                
+
             }
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -336,15 +348,23 @@ struct ComposePostView: View {
             bio: nil
         ),
         replyTo: Post(
-            id: "preview1", userId: "user1", replyToPostId: nil,
+            id: "preview1",
+            userId: "user1",
+            replyToPostId: nil,
             text: "拠点の横に村ができてた！交易所にしたい",
             imageURLs: [],
             createdAt: Date().addingTimeInterval(-3 * 60 * 60),  // 今から3時間前
             tags: ["建築", "サバイバル"],
-            replyCount: 0, likeCount: 5,
-            userName: "たいき", userIconURL: nil,
-            version: "1.21.40", device: .nintendoSwitch, seed: nil,
-            realmsCode: nil, serverAddress: nil, xboxGamertag: nil
+            replyCount: 0,
+            likeCount: 5,
+            userName: "たいき",
+            userIconURL: nil,
+            version: "1.21.40",
+            device: .nintendoSwitch,
+            seed: nil,
+            realmsCode: nil,
+            serverAddress: nil,
+            xboxGamertag: nil
         ),
         onPosted: {}
     )
