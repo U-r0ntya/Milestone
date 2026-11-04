@@ -3,16 +3,25 @@ import SwiftUI
 // 投稿の詳細：投稿の全体と、その投稿への返信の一覧（古い順）
 // 返信を書く・いいねを押すのはフェーズ5で作る
 struct PostDetailView: View {
+    let user: User  // 返信する人（ログイン中の人）
+
     @State private var viewModel: PostDetailViewModel
 
     // どの投稿の詳細かを受け取って、その投稿用の ViewModel を作る
-    init(post: Post) {
+    init(user: User, post: Post) {
+        self.user = user
         _viewModel = State(initialValue: PostDetailViewModel(post: post))
     }
 
     // プレビュー用（Firestore を使わない Repository を渡せる）
-    init(post: Post, repository: PostRepository) {
-        _viewModel = State(initialValue: PostDetailViewModel(post: post, repository: repository))
+    init(user: User, post: Post, repository: PostRepository) {
+        self.user = user
+        _viewModel = State(
+            initialValue: PostDetailViewModel(
+                post: post,
+                repository: repository
+            )
+        )
     }
 
     var body: some View {
@@ -91,7 +100,10 @@ struct PostDetailView: View {
                                 .padding(.vertical, 2)
                                 .overlay(
                                     Capsule()
-                                        .stroke(Color.appCardBorder, lineWidth: 1)  // うすい紫の枠
+                                        .stroke(
+                                            Color.appCardBorder,
+                                            lineWidth: 1
+                                        )  // うすい紫の枠
                                 )
                         }
                     }
@@ -168,16 +180,31 @@ struct PostDetailView: View {
 #Preview {
     NavigationStack {
         PostDetailView(
+            user: User(
+                id: "preview",
+                name: "すてぃーぶ",
+                iconURL: nil,
+                device: .nintendoSwitch,
+                bio: nil
+            ),
             post: Post(
-                id: "preview1", userId: "user1", replyToPostId: nil,
+                id: "preview1",
+                userId: "user1",
+                replyToPostId: nil,
                 text: "拠点の横に村ができてた！交易所にしたい",
                 imageURLs: [],
                 createdAt: Date().addingTimeInterval(-3 * 60 * 60),  // 今から3時間前
                 tags: ["建築", "サバイバル", "村", "交易所", "スポーン付近"],
-                replyCount: 0, likeCount: 5,
-                userName: "すてぃーぶ", userIconURL: nil,
-                version: "1.21.40", device: .nintendoSwitch, seed: nil,
-                realmsCode: nil, serverAddress: nil, xboxGamertag: nil
+                replyCount: 0,
+                likeCount: 5,
+                userName: "すてぃーぶ",
+                userIconURL: nil,
+                version: "1.21.40",
+                device: .nintendoSwitch,
+                seed: nil,
+                realmsCode: nil,
+                serverAddress: nil,
+                xboxGamertag: nil
             ),
             repository: MockAPIPostRepository()  // プレビューでは Firestore を使わない（返信は0件）
         )

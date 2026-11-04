@@ -32,7 +32,7 @@ struct TimelineView: View {
         }
         // NavigationLink で渡された投稿を受け取って、詳細の画面を出す
         .navigationDestination(for: Post.self) { post in
-            PostDetailView(post: post)
+            PostDetailView(user:user, post: post)
         }
         .task {
             await viewModel.loadPosts()  // 画面を開いたときに読み込む
