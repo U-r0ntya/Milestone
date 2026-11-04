@@ -5,7 +5,7 @@ import Observation
 @Observable
 @MainActor
 final class PostDetailViewModel {
-    let post: Post  // 詳細を見ている投稿（変わらないので let）
+    private(set) var post: Post  // 詳細を見ている投稿　set:書きかえることだけを private にする
     var replies: [Post] = []  // 返信の一覧（古い順）
     var isLoading = false  // 読み込み中か
     var errorMessage: String? = nil
@@ -41,6 +41,13 @@ final class PostDetailViewModel {
             errorMessage = "返信を読み込めませんでした。通信状態を確かめて、もう一度試してください。"
             //  失敗したら
         }
-
+    }
+    // 投稿を読み直す（返信したあとに、最新の返信数を出すため）
+    func reloadPost() async {
+        do {
+            post = try await repository.fetchPost(id:post.id)
+        } catch {
+            // 失敗しても、今の表示のままにする
+        }
     }
 }
