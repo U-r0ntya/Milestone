@@ -12,13 +12,20 @@ struct ComposePostView: View {
     @FocusState private var isTagFocused: Bool  // タグの入力欄にフォーカスがあるか
     @State private var isShowingTagInput = false  // タグの入力欄を出しているか
     // 下書き（アプリを閉じても残る）
-    @AppStorage("composeDraftText") private var draftText = ""
+    @AppStorage private var draftText: String
     
     init(user: User, replyTo: Post? = nil, onPosted: @escaping () -> Void) {
         self.user = user
         self.replyTo = replyTo
         self.onPosted = onPosted
         _viewModel = State(initialValue:ComposePostViewModel(replyToPostId: replyTo?.id))
+        if let replyTo {
+            // 返信先の投稿ごとに下書きを登録しておく
+            _draftText = AppStorage(wrappedValue: "", "replyDraft_\(replyTo.id)" )
+        }else{
+            // 投稿するだけなので、登録先は一つ
+            _draftText = AppStorage(wrappedValue: "", "composeDraftText")
+        }
     }
     
     // キーボードの上の道具の列（押したときの機能は、あとで作る）
