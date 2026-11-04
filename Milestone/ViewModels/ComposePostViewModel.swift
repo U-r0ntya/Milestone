@@ -39,18 +39,22 @@ final class ComposePostViewModel {
     // タグを外す（同じ名前のものを消す）
     func removeTag(_ tag: String) {
         selectedTags.removeAll { $0 == tag }
-        
+
     }
 
     private let repository: PostRepository
 
+    private let replyToPostId: String?
+
     // AuthViewModel・TimelineViewModel と同じ2つの init
-    init() {
+    init(replyToPostId: String? = nil) {
         self.repository = FirestorePostRepository()
+        self.replyToPostId = replyToPostId
     }
 
-    init(repository: PostRepository) {
+    init(repository: PostRepository, replyToPostId: String? = nil) {
         self.repository = repository
+        self.replyToPostId = replyToPostId
     }
 
     // 本文の前後の空白を取り除いたもの
@@ -72,7 +76,7 @@ final class ComposePostViewModel {
         let newPost = Post(
             id: UUID().uuidString,  // 投稿の ID をここで作る（毎回ちがう文字列になる）
             userId: user.id,
-            replyToPostId: nil,  // 返信ではない
+            replyToPostId: replyToPostId,
             text: trimmedText,
             imageURLs: [],  // 画像はあとで
             createdAt: Date(),  // 今の日時
@@ -90,11 +94,21 @@ final class ComposePostViewModel {
         )
         do {
             // 保存する
-            try await repository.savePost(newPost)
+            if let parentId = newPost.replyToPostId {
+                try await repository.saveReply(
+                    newPost,
+                    parentId: parentId
+                )
+            } else {
+                try await repository.savePost(newPost)
+            }
             return true
 
         } catch {
-            errorMessage = "投稿を保存できませんでした。通信状態を確かめて、もう一度試してください。"
+            errorMessage =
+                (replyToPostId == nil
+                    ? "投稿を保存できませんでした。通信状態を確かめて、もう一度試してください。"
+                    : "返信を保存できませんでした。通信状態を確かめて、もう一度試してください。")
             return false
         }
     }
