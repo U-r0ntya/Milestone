@@ -110,9 +110,65 @@ struct ComposePostView: View {
         }
     }
 
+    // 返信先の投稿（返信のときだけ、本文の入力欄の上に出す。詳細画面の投稿と同じ形）
+    private func replySourceSection(_ post: Post) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // アイコン・名前・機種
+            HStack(spacing: 12) {
+                // アイコン（今は全員同じ。本物のアイコンはフェーズ7で付ける）
+                Image(systemName: "person.circle.fill")
+                    .resizable()
+                    .frame(width: 48, height: 48)
+                    .foregroundStyle(.appCardBorder)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(post.userName)
+                        .font(.headline)
+                        .foregroundStyle(.appTextPrimary)
+
+                    // 機種が入っているときだけ、ラベルを出す
+                    if let device = post.device {
+                        Text(device.displayName)
+                            .font(.caption2.bold())
+                            .foregroundStyle(.appTagText)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(Color.appTagBackground)
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+
+            // 本文（長いときは5行まで。入力欄がせまくならないように）
+            Text(post.text)
+                .font(.body)
+                .foregroundStyle(.appTextPrimary)
+                .lineLimit(5)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            // 投稿した日時（「2026年11月2日 19:49」の形）
+            Text(
+                post.createdAt.formatted(
+                    .dateTime.year().month().day().hour().minute()
+                        .locale(Locale(identifier: "ja_JP"))
+                )
+            )
+            .font(.caption)
+            .foregroundStyle(.appTextSecondary)
+
+            Divider()
+                .overlay(Color.appCardBorder)  // うすい紫の区切り線
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
+                // 返信先の投稿（返信のときだけ）
+                if let replyTo {
+                    replySourceSection(replyTo)
+                }
+
                 HStack(alignment: .top, spacing: 12) {
                     // アイコン（今は全員同じ。本物のアイコンはフェーズ7で付ける）
                     Image(systemName: "person.circle.fill")
@@ -257,6 +313,31 @@ struct ComposePostView: View {
             iconURL: nil,
             device: .nintendoSwitch,
             bio: nil
+        ),
+        onPosted: {}
+    )
+}
+
+// 返信の画面（返信先の投稿を表示）
+#Preview("返信") {
+    ComposePostView(
+        user: User(
+            id: "preview",
+            name: "すてぃーぶ",
+            iconURL: nil,
+            device: .nintendoSwitch,
+            bio: nil
+        ),
+        replyTo: Post(
+            id: "preview1", userId: "user1", replyToPostId: nil,
+            text: "拠点の横に村ができてた！交易所にしたい",
+            imageURLs: [],
+            createdAt: Date().addingTimeInterval(-3 * 60 * 60),  // 今から3時間前
+            tags: ["建築", "サバイバル"],
+            replyCount: 0, likeCount: 5,
+            userName: "たいき", userIconURL: nil,
+            version: "1.21.40", device: .nintendoSwitch, seed: nil,
+            realmsCode: nil, serverAddress: nil, xboxGamertag: nil
         ),
         onPosted: {}
     )
