@@ -5,8 +5,8 @@ struct MainTabView: View {
     let authViewModel: AuthViewModel
     let user: User  // ログイン中の人
 
-    @State private var isShowingDraftDialog = false  // 下書きのカードを出しているか
-    @AppStorage("composeDraftText") private var draftText = ""  // 投稿の画面と同じ下書き
+    @State private var draftDialogKey: String? = nil // カードに出す下書きのキー（nil ならカードを出さない)
+
 
     var body: some View {
         TabView {
@@ -14,7 +14,7 @@ struct MainTabView: View {
             NavigationStack {
                 TimelineView(
                     user: user,
-                    isShowingDraftDialog: $isShowingDraftDialog
+                    draftDialogKey: $draftDialogKey
                 )  // ログイン中の人と、下書きのカードの値を渡す
                 .appHeader("タイムライン")
             }
@@ -40,14 +40,14 @@ struct MainTabView: View {
                 Label("プロフィール", systemImage: "person")
             }
         }.overlay {
-            if isShowingDraftDialog {
+            if let key = draftDialogKey {
                 DraftSaveDialog(
                     onSave: {
-                        isShowingDraftDialog = false  // 下書きはもう保存されているので、閉じるだけ
+                        draftDialogKey = nil // 入力ごとに下書きはもう保存されているので、閉じるだけ
                     },
                     onDelete: {
-                        draftText = ""  // 下書きを消す
-                        isShowingDraftDialog = false
+                        UserDefaults.standard.removeObject(forKey: key)
+                        draftDialogKey = nil
                     }
                 )
             }

@@ -1,18 +1,36 @@
 import SwiftUI
 
 // 投稿の詳細：投稿の全体と、その投稿への返信の一覧（古い順）
-// 返信を書く・いいねを押すのはフェーズ5で作る
+
 struct PostDetailView: View {
+    let user: User  // 返信する人（ログイン中の人）
+
     @State private var viewModel: PostDetailViewModel
+    @State private var isShowingReply = false  // 返信のシートを出しているか
+    @Binding var draftDialogKey: String?  // 下書きのカードに出すキー（MainTabView から借りる。nil ならカードを出さない）
 
     // どの投稿の詳細かを受け取って、その投稿用の ViewModel を作る
-    init(post: Post) {
+    init(user: User, post: Post, draftDialogKey: Binding<String?>) {
+        self.user = user
         _viewModel = State(initialValue: PostDetailViewModel(post: post))
+        _draftDialogKey = draftDialogKey
     }
 
     // プレビュー用（Firestore を使わない Repository を渡せる）
-    init(post: Post, repository: PostRepository) {
-        _viewModel = State(initialValue: PostDetailViewModel(post: post, repository: repository))
+    init(
+        user: User,
+        post: Post,
+        repository: PostRepository,
+        draftDialogKey: Binding<String?>
+    ) {
+        self.user = user
+        _viewModel = State(
+            initialValue: PostDetailViewModel(
+                post: post,
+                repository: repository
+            )
+        )
+        _draftDialogKey = draftDialogKey
     }
 
     var body: some View {
@@ -34,11 +52,36 @@ struct PostDetailView: View {
         }
         .refreshable {
             await viewModel.loadReplies()  // 引っ張って返信を読み直す
+            await viewModel.reloadPost()
         }
         .task {
             await viewModel.loadReplies()  // 画面を開いたときに返信を読み込む
+            await viewModel.reloadPost()
         }
         .appHeader("投稿")
+        .sheet(
+            isPresented: $isShowingReply,
+            onDismiss: {
+                let key = ComposePostView.draftKey(for: viewModel.post)
+                //　返信の画面（@AppStorage）が同じキーで保存した下書きを読む（なければ空の文字）
+                let text = UserDefaults.standard.string(forKey: key) ?? ""
+                if !text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
+                {
+                    draftDialogKey = key
+                }
+            }
+        ) {
+            ComposePostView(
+                user: user,
+                replyTo: viewModel.post
+            ) {
+                Task {
+                    await viewModel.loadReplies()
+                    await viewModel.reloadPost()
+                }
+            }
+        }
     }
 
     // 投稿の全体（タイムラインのカードより大きく、全部の情報を出す）
@@ -91,7 +134,10 @@ struct PostDetailView: View {
                                 .padding(.vertical, 2)
                                 .overlay(
                                     Capsule()
-                                        .stroke(Color.appCardBorder, lineWidth: 1)  // うすい紫の枠
+                                        .stroke(
+                                            Color.appCardBorder,
+                                            lineWidth: 1
+                                        )  // うすい紫の枠
                                 )
                         }
                     }
@@ -111,9 +157,13 @@ struct PostDetailView: View {
 
             // 返信数・いいね数（今は表示だけ。押せるのはフェーズ5）
             HStack(spacing: 20) {
-                HStack(spacing: 4) {
-                    Image(systemName: "bubble.right")
-                    Text("\(post.replyCount)")
+                Button {
+                    isShowingReply = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "bubble.right")
+                        Text("\(post.replyCount)")
+                    }.buttonStyle(.plain)
                 }
                 HStack(spacing: 4) {
                     Image(systemName: "heart")
@@ -168,18 +218,34 @@ struct PostDetailView: View {
 #Preview {
     NavigationStack {
         PostDetailView(
+            user: User(
+                id: "preview",
+                name: "すてぃーぶ",
+                iconURL: nil,
+                device: .nintendoSwitch,
+                bio: nil
+            ),
             post: Post(
-                id: "preview1", userId: "user1", replyToPostId: nil,
+                id: "preview1",
+                userId: "user1",
+                replyToPostId: nil,
                 text: "拠点の横に村ができてた！交易所にしたい",
                 imageURLs: [],
                 createdAt: Date().addingTimeInterval(-3 * 60 * 60),  // 今から3時間前
                 tags: ["建築", "サバイバル", "村", "交易所", "スポーン付近"],
-                replyCount: 0, likeCount: 5,
-                userName: "すてぃーぶ", userIconURL: nil,
-                version: "1.21.40", device: .nintendoSwitch, seed: nil,
-                realmsCode: nil, serverAddress: nil, xboxGamertag: nil
+                replyCount: 0,
+                likeCount: 5,
+                userName: "すてぃーぶ",
+                userIconURL: nil,
+                version: "1.21.40",
+                device: .nintendoSwitch,
+                seed: nil,
+                realmsCode: nil,
+                serverAddress: nil,
+                xboxGamertag: nil
             ),
-            repository: MockAPIPostRepository()  // プレビューでは Firestore を使わない（返信は0件）
+            repository: MockAPIPostRepository(),  // プレビューでは Firestore を使わない（返信は0件）
+            draftDialogKey: .constant(nil)
         )
     }
 }
