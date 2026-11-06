@@ -6,9 +6,13 @@ import Observation
 @MainActor
 final class PostDetailViewModel {
     private(set) var post: Post  // 詳細を見ている投稿　set:書きかえることだけを private にする
+    private(set) var isLiked: Bool = false  // いいね済みか
+    private(set) var likeCount: Int  // 画面にカウント数を出す変数
+    private(set) var isLiking: Bool = false  // いいねの保存中か
+
     var replies: [Post] = []  // 返信の一覧（古い順）
-    var isLoading = false  // 読み込み中か
-    var errorMessage: String? = nil
+    var isLoading = false  // 投稿を読み込み中か
+    var errorMessage: String? = nil  // エラーメッセージ
 
     private let repository: PostRepository
 
@@ -16,11 +20,13 @@ final class PostDetailViewModel {
     init(post: Post) {
         self.post = post
         self.repository = FirestorePostRepository()
+        likeCount = post.likeCount  // 画面にカウント数を出す変数（初期値は現在の数）
     }
 
     init(post: Post, repository: PostRepository) {
         self.post = post
         self.repository = repository
+        likeCount = post.likeCount  // 画面にカウント数を出す変数（初期値は現在の数）
     }
 
     // 返信を読み込む
@@ -45,9 +51,46 @@ final class PostDetailViewModel {
     // 投稿を読み直す（返信したあとに、最新の返信数を出すため）
     func reloadPost() async {
         do {
-            post = try await repository.fetchPost(id:post.id)
+            post = try await repository.fetchPost(id: post.id)  // 投稿ごと更新
+            likeCount = post.likeCount  // 数の更新
         } catch {
             // 失敗しても、今の表示のままにする
+        }
+    }
+    // いいねを押しているかどうか
+    func loadIsLiked(userId: String) async {
+        do {
+            isLiked = try await repository.isLiked(
+                postId: post.id,
+                userId: userId
+            )
+        } catch {
+            // 失敗しても、今の表示のままにする
+        }
+    }
+
+    // いいねを押した時
+    func toggleLike(userId: String) async {
+        guard !isLiking else { return }  // 保存中にもう一度呼ばれたら何もしない
+        isLiking = true  // 保存を始めた
+        defer { isLiking = false }  // この関数を抜けるときに、必ず false に戻す
+        // 押す前のハートと数を覚えておき、失敗したら戻す
+        let oldCount = likeCount
+        let wasLiked = isLiked
+        do {
+            if !isLiked {  // いいね済みでないなら
+                isLiked = true
+                likeCount = likeCount + 1
+                try await repository.likePost(postId: post.id, userId: userId)
+            } else {
+                likeCount = likeCount - 1
+                isLiked = false
+                try await repository.unlikePost(postId: post.id, userId: userId)
+            }
+        } catch {  // 失敗したら
+            likeCount = oldCount
+            isLiked = wasLiked
+
         }
     }
 }
