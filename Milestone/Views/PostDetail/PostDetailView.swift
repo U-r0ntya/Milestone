@@ -57,6 +57,7 @@ struct PostDetailView: View {
         .task {
             await viewModel.loadReplies()  // 画面を開いたときに返信を読み込む
             await viewModel.reloadPost()
+            await viewModel.loadIsLiked(userId: user.id)
         }
         .appHeader("投稿")
         .sheet(
@@ -71,7 +72,7 @@ struct PostDetailView: View {
                     draftDialogKey = key
                 }
             }
-        ) {
+        ) {  // 返信を送れたあとに呼ばれる処理
             ComposePostView(
                 user: user,
                 replyTo: viewModel.post
@@ -165,10 +166,29 @@ struct PostDetailView: View {
                         Text("\(post.replyCount)")
                     }.buttonStyle(.plain)
                 }
-                HStack(spacing: 4) {
-                    Image(systemName: "heart")
-                    Text("\(post.likeCount)")
+                Button {
+                    Task { await viewModel.toggleLike(userId: user.id) }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(
+                            systemName: viewModel.isLiked
+                                ? "heart.fill" : "heart"
+                        )
+                        Text("\(viewModel.likeCount)")
+                    }
                 }
+                .buttonStyle(.plain)
+                .foregroundStyle(
+                    viewModel.isLiked ? Color.appLike : Color.appTextSecondary
+                )
+                .sensoryFeedback(.impact, trigger: viewModel.isLiked) {
+                    _,
+                    newValue in
+                    viewModel.isLiking
+                }
+                .contentTransition(.symbolEffect(.replace))
+                .disabled(viewModel.isLiking)
+
             }
             .font(.subheadline)
             .foregroundStyle(.appTextSecondary)
