@@ -7,15 +7,22 @@ struct PostDetailView: View {
 
     @State private var viewModel: PostDetailViewModel
     @State private var isShowingReply = false  // 返信のシートを出しているか
+    @Binding var draftDialogKey: String?  // 下書きのカードに出すキー（MainTabView から借りる。nil ならカードを出さない）
 
     // どの投稿の詳細かを受け取って、その投稿用の ViewModel を作る
-    init(user: User, post: Post) {
+    init(user: User, post: Post, draftDialogKey: Binding<String?>) {
         self.user = user
         _viewModel = State(initialValue: PostDetailViewModel(post: post))
+        _draftDialogKey = draftDialogKey
     }
 
     // プレビュー用（Firestore を使わない Repository を渡せる）
-    init(user: User, post: Post, repository: PostRepository) {
+    init(
+        user: User,
+        post: Post,
+        repository: PostRepository,
+        draftDialogKey: Binding<String?>
+    ) {
         self.user = user
         _viewModel = State(
             initialValue: PostDetailViewModel(
@@ -23,6 +30,7 @@ struct PostDetailView: View {
                 repository: repository
             )
         )
+        _draftDialogKey = draftDialogKey
     }
 
     var body: some View {
@@ -51,7 +59,19 @@ struct PostDetailView: View {
             await viewModel.reloadPost()
         }
         .appHeader("投稿")
-        .sheet(isPresented: $isShowingReply) {
+        .sheet(
+            isPresented: $isShowingReply,
+            onDismiss: {
+                let key = ComposePostView.draftKey(for: viewModel.post)
+                //　返信の画面（@AppStorage）が同じキーで保存した下書きを読む（なければ空の文字）
+                let text = UserDefaults.standard.string(forKey: key) ?? ""
+                if !text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
+                {
+                    draftDialogKey = key
+                }
+            }
+        ) {
             ComposePostView(
                 user: user,
                 replyTo: viewModel.post
@@ -224,7 +244,8 @@ struct PostDetailView: View {
                 serverAddress: nil,
                 xboxGamertag: nil
             ),
-            repository: MockAPIPostRepository()  // プレビューでは Firestore を使わない（返信は0件）
+            repository: MockAPIPostRepository(),  // プレビューでは Firestore を使わない（返信は0件）
+            draftDialogKey: .constant(nil)
         )
     }
 }
