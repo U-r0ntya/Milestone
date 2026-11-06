@@ -4,9 +4,8 @@ import SwiftUI
 struct TimelineView: View {
     let user: User  // ログイン中の人（投稿するときに使う）
     @State private var viewModel = TimelineViewModel()
-
     @State private var isShowingCompose = false  // 投稿の画面を開いているか
-    @Binding var isShowingDraftDialog: Bool  // 下書きのカードを出しているか（MainTabView から借りる）
+    @Binding var draftDialogKey: String? // 下書きのカードに出すキー（MainTabView から借りる。nil ならカードを出さない）
     @AppStorage("composeDraftText") private var draftText = ""  // 投稿の画面と同じ名前（キー）なので、同じ下書きを読む
 
     var body: some View {
@@ -32,7 +31,7 @@ struct TimelineView: View {
         }
         // NavigationLink で渡された投稿を受け取って、詳細の画面を出す
         .navigationDestination(for: Post.self) { post in
-            PostDetailView(user:user, post: post)
+            PostDetailView(user: user, post: post)
         }
         .task {
             await viewModel.loadPosts()  // 画面を開いたときに読み込む
@@ -44,7 +43,7 @@ struct TimelineView: View {
                 if !draftText.trimmingCharacters(in: .whitespacesAndNewlines)
                     .isEmpty
                 {
-                    isShowingDraftDialog = true
+                    draftDialogKey = ComposePostView.draftKey(for: nil)
                 }
             }
         ) {
@@ -137,7 +136,7 @@ struct TimelineView: View {
                 device: .nintendoSwitch,
                 bio: nil
             ),
-            isShowingDraftDialog: .constant(false)
+            draftDialogKey: .constant(nil)
         )
         .appHeader("タイムライン")
     }
