@@ -19,7 +19,8 @@ struct ComposePostView: View {
         self.replyTo = replyTo
         self.onPosted = onPosted
         _viewModel = State(
-            initialValue: ComposePostViewModel(replyToPostId: replyTo?.id))
+            initialValue: ComposePostViewModel(replyToPostId: replyTo?.id)
+        )
         _draftText = AppStorage(wrappedValue: "", Self.draftKey(for: replyTo))
     }
 
@@ -265,11 +266,42 @@ struct ComposePostView: View {
 
                 // エラー
                 if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .font(.footnote)
-                        .foregroundStyle(.red)
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                        Text(errorMessage)
+                            .font(.footnote)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button {
+                            // エラーを消す（ふわっと消えるように、アニメーション付きで）
+                            withAnimation {
+                                viewModel.errorMessage = nil
+                            }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                    }
+                    .foregroundStyle(.appErrorText)  // 文字とアイコンの赤（ライト／ダークで変わる）
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 16)
+                    .background(Color.appErrorBackground)  // うすい赤の背景（ライト／ダークで変わる）
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 12,
+                            style: .continuous
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(
+                            cornerRadius: 12,
+                            style: .continuous
+                        )
+                        .stroke(
+                            Color.appErrorBorder,
+                            lineWidth: 1
+                        )  // うすい赤の枠（ライト／ダークで変わる）
+                    )
+                    .transition(.opacity)  //withAnimationが実行されたらViewがふわっと消える
                 }
-
             }
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -323,8 +355,15 @@ struct ComposePostView: View {
                     .disabled(!viewModel.canPost)
                 }
             }
+            .animation(.default, value: viewModel.errorMessage)  // エラーメッセージが表示されるとふわっと現れる
+            .sensoryFeedback(.error, trigger: viewModel.errorMessage) {
+                _,
+                newValue in
+                newValue != nil
+            }  // バイブレーション
         }  // NavigationStack の終わり
         .interactiveDismissDisabled(viewModel.isPosting)  // 保存中は、下にスワイプして閉じられないようにする
+
     }
 }
 
