@@ -155,11 +155,11 @@ struct ComposePostView: View {
                 }
             }
 
-            // 本文（長いときは5行まで。入力欄がせまくならないように）
+            // 本文（3行まで。4行目からは「…」にして、入力欄がせまくならないように）
             Text(post.text)
                 .font(.body)
                 .foregroundStyle(.appTextPrimary)
-                .lineLimit(5)
+                .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             // 投稿した日時（「2026年11月2日 19:49」の形）
@@ -210,7 +210,11 @@ struct ComposePostView: View {
                             TextEditor(text: $viewModel.text)
                                 .scrollContentBackground(.hidden)  // TextEditor の白い背景を消す
                                 .foregroundStyle(.appTextPrimary)
-                                .frame(minHeight: 160, maxHeight: .infinity)
+                                // 最低の高さ（返信のときは返信先の投稿があるぶん低くして、キーボードと重ならないように）
+                                .frame(
+                                    minHeight: replyTo == nil ? 160 : 80,
+                                    maxHeight: .infinity
+                                )
                                 .focused($isTextFocused)
                         }
                     }
