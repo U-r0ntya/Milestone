@@ -8,9 +8,15 @@ protocol PostRepository {
     func fetchOlderPosts(before date: Date) async throws -> [Post]  // ← 追加：この日時より古い投稿を取ってくる
     func fetchReplies(postId: String) async throws -> [Post]
     func savePost(_ post: Post) async throws
-    /// 返信を保存し、元の投稿の replyCount を 1 増やす
+    // 返信を保存し、元の投稿の replyCount を 1 増やす
     func saveReply(_ reply: Post, parentId: String) async throws
     func fetchPost(id: String) async throws -> Post
+    // いいねをする
+    func likePost(postId: String, userId: String) async throws
+    // いいねを取り消す
+    func unlikePost(postId: String, userId: String) async throws
+    // いいね済みか調べる
+    func isLiked(postId: String, userId: String) async throws -> Bool
 
 }
 
@@ -65,6 +71,11 @@ struct MockAPIPostRepository: PostRepository {
             throw URLError(.badServerResponse)  // 見つからなかった
         }
         return post
+    }
+    func likePost(postId: String, userId: String) async throws {}
+    func unlikePost(postId: String, userId: String) async throws {}
+    func isLiked(postId: String, userId: String) async throws -> Bool {
+        return false
     }
 }
 
@@ -153,5 +164,70 @@ struct FirestorePostRepository: PostRepository {
         let snapshot = try await idRef.getDocument()
         // data(as: Post.self) で Post に変えて返す（通信しない、変換が失敗するかも → try だけ）
         return try snapshot.data(as: Post.self)
+    }
+    // postId: いいねした投稿のID, userId: いいねした人のユーザーID
+    func likePost(postId: String, userId: String) async throws {
+        let like = Like(userId: userId, createdAt: Date(), postId: postId)
+        let batch = db.batch()
+
+        // この投稿に、だれがいいねしたか
+        let postLikeRef = db.collection("posts").document(postId).collection(
+            "likes"
+        ).document(userId)
+        // from:何を書くか、forDocument:どこのドキュメントに書くか
+        try batch.setData(from: like, forDocument: postLikeRef)
+
+        // この人が、どの投稿にいいねしたか
+        let userLikeRef = db.collection("users").document(userId).collection(
+            "likes"
+        )
+        .document(postId)
+        // from:何を書くか、forDocument:どこのドキュメントに書くか
+        try batch.setData(from: like, forDocument: userLikeRef)
+
+        // 投稿の likeCount を +1 する予定に入れる
+        batch.updateData(
+            ["likeCount": FieldValue.increment(Int64(1))],
+            forDocument: db.collection("posts").document(postId)
+        )
+
+        try await batch.commit()
+    }
+
+    func unlikePost(postId: String, userId: String) async throws {
+        let batch = db.batch()
+
+        // この投稿に、だれがいいねしたか
+        let postLikeRef = db.collection("posts").document(postId).collection(
+            "likes"
+        ).document(userId)
+        // deleteDocument(場所)：指定の場所を消す
+        batch.deleteDocument(postLikeRef)
+
+        // この人が、どの投稿にいいねしたか
+        let userLikeRef = db.collection("users").document(userId).collection(
+            "likes"
+        )
+        .document(postId)
+        // deleteDocument(場所)：指定の場所を消す
+        batch.deleteDocument(userLikeRef)
+        // 投稿の likeCount を -1 する予定に入れる
+        batch.updateData(
+            ["likeCount": FieldValue.increment(Int64(-1))],
+            forDocument: db.collection("posts").document(postId)
+        )
+
+        try await batch.commit()
+    }
+    // ドキュメントがあれば、いいね済み
+    func isLiked(postId: String, userId: String) async throws -> Bool {
+        let userLikeRef = db.collection("users").document(userId).collection(
+            "likes"
+        )
+        .document(postId)
+        // 場所を読み取る
+        let userSnapshot = try await userLikeRef.getDocument()
+        // 読み取った場所があるかないか
+        return userSnapshot.exists
     }
 }
