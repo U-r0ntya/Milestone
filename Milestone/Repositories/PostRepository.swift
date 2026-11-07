@@ -107,17 +107,22 @@ struct FirestorePostRepository: PostRepository {
         try ref.setData(from: post)
     }
 
+    // ある投稿への返信を、Firestore から全部読んでくる（投稿の詳細画面の、返信の一覧で使う）
+    // ① posts の中から、replyToPostId が postId と同じもの（＝その投稿への返信）だけを読む
+    // ② 読んだドキュメントを1件ずつ Post に変えて、配列にする
+    // ③ 投稿日時の古い順に並べかえて返す
+    // 並べかえを Firestore の order(by:) でしないのは、whereField と一緒に使うとインデックスを作る必要があるから
     func fetchReplies(postId: String) async throws -> [Post] {
-        // この投稿への返信だけを取ってくる（決まった形）
+        // ① この投稿への返信だけを取ってくる（決まった形）
         let snapshot = try await db.collection("posts")
             .whereField("replyToPostId", isEqualTo: postId)
             .getDocuments()
 
-        // 1件ずつ Post に変える
+        // ② 1件ずつ Post に変える
         let fetchedReplies = try snapshot.documents.map {
             try $0.data(as: Post.self)
         }
-        // 古い順に並べて返す
+        // ③ 古い順に並べて返す
         return fetchedReplies.sorted { $0.createdAt < $1.createdAt }
     }
     func fetchOlderPosts(before date: Date) async throws -> [Post] {
