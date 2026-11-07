@@ -24,7 +24,7 @@ struct MainTabView: View {
 
             // ワールド
             NavigationStack {
-                WorldView()
+                WorldListView(user: user)
                     .appHeader("ワールド")
             }
             .tabItem {
