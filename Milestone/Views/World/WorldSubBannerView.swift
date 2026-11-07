@@ -64,7 +64,10 @@ struct WorldSubBannerView: View {
                 }
             }
 
-            // ランクの表示は、WorldRank ができたらここに足す（サバイバルだけ）
+            // ランク（サバイバルで、日数（time）があるときだけ。手で入力したワールドは出さない）
+            if world.gameMode == .survival, world.time != nil {
+                WorldRankView(rank: WorldRank(world: world))
+            }
 
             // 詳細の表（2列）
             LazyVGrid(

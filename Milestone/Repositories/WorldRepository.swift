@@ -28,7 +28,7 @@ struct MockWorldRepository: WorldRepository {
                 spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
                 lastOpenedVersion: "1.21.40",
                 lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),  // 3時間前
-                time: 2_400_000,
+                time: 2_400_000_00,
                 worldType: .infinite,
                 commandsEnabled: false,
                 hasUsedCheats: false,
