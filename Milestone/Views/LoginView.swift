@@ -91,4 +91,5 @@ struct LoginView: View {
 struct PreviewUserRepository: UserRepository {
     func fetchUser(uid: String) async throws -> User? { nil }
     func saveUser(_ user: User) async throws {}
+    func updateFavoriteWorld(userId: String,worldId:String?)async throws{}  // プレビューでは保存しない
 }
