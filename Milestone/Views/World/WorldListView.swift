@@ -151,7 +151,14 @@ struct WorldListView: View {
             ownerName: user.name,
             isFavorite: viewModel.favoriteWorldId == world.id,
             startsOpen: startsOpen,
-            onToggleFavorite: { viewModel.toggleFavorite(world) }
+            onToggleFavorite: {
+                Task {
+                    await viewModel.toggleFavorite(
+                        userId: user.id,
+                        worldId: world.id
+                    )
+                }
+            }
         )
     }
 }

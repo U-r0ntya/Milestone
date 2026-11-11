@@ -7,14 +7,14 @@ protocol UserRepository {
     /// ユーザーを保存する（ドキュメント全体を書く）
     func saveUser(_ user: User) async throws
     /// お気に入りのワールドだけを書きかえる（worldId が nil なら、お気に入りを外す）
-    func updateFavoriteWorld(userId: String,worldId:String?)async throws
+    func updateFavoriteWorld(userId: String, worldId: String?) async throws
 }
 
 // プレビュー用の係（通信しない。Firestore を使わず、何も返さない・保存しない）
 struct MockUserRepository: UserRepository {
     func fetchUser(uid: String) async throws -> User? { nil }
     func saveUser(_ user: User) async throws {}
-    func updateFavoriteWorld(userId: String,worldId:String?)async throws{}  // プレビューでは保存しない
+    func updateFavoriteWorld(userId: String, worldId: String?) async throws {}  // プレビューでは保存しない
 }
 
 // Firestore で読み書きする係
@@ -29,7 +29,7 @@ struct FirestoreUserRepository: UserRepository {
         let snapshot = try await ref.getDocument()
         // 無かった → nil を返す（まだ登録していない人）
         guard snapshot.exists else {
-           return nil
+            return nil
         }
         // あれば User に変換して返す
         let user = try snapshot.data(as: User.self)
@@ -44,15 +44,15 @@ struct FirestoreUserRepository: UserRepository {
     }
 
     // お気に入りのワールドを保存する（ほかの項目はそのままで、favoriteWorldId だけ書きかえる）
-    func updateFavoriteWorld(userId: String,worldId:String?)async throws {
+    func updateFavoriteWorld(userId: String, worldId: String?) async throws {
         let ref = db.collection("users").document(userId)
         if let worldId {
             // お気に入りにする：ワールドの ID を入れる
             try await ref.updateData(["favoriteWorldId": worldId])
-        }else{
+        } else {
             // お気に入りを外す：辞書に nil は入れられないので、FieldValue.delete() で項目ごと消す
             try await ref.updateData(["favoriteWorldId": FieldValue.delete()])
         }
-        
+
     }
 }

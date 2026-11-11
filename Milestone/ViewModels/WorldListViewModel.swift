@@ -78,7 +78,29 @@ final class WorldListViewModel {
     }
 
     // 星を押したとき：お気に入りにする。もう一度押すと外す（1つだけ）
-    func toggleFavorite(_ world: World) {
-        favoriteWorldId = (favoriteWorldId == world.id) ? nil : world.id
+    // 先に星を切りかえて見せてから Firestore に保存し、失敗したら元に戻す（いいねと同じ）
+    func toggleFavorite(userId: String, worldId: String) async {
+        guard !isSavingFavorite else { return }  // 保存中にもう一度押されたら何もしない
+        isSavingFavorite = true  // 保存を始めた
+        defer { isSavingFavorite = false }  // この関数を抜けるときに、必ず false に戻す
+
+        let oldFavoriteWorldId = favoriteWorldId  // 押す前のお気に入り（失敗したら戻す）
+
+        // 押したあとのお気に入り：同じワールドなら外す（nil）、違えばそのワールド
+        let newFavoriteWorldId: String? =
+            (favoriteWorldId == worldId) ? nil : worldId
+        favoriteWorldId = newFavoriteWorldId  // 先に画面の星を切りかえる
+
+        errorMessage = nil
+        do {
+            // Firestore に保存する（nil なら、お気に入りの項目を消す）
+            try await userRepository.updateFavoriteWorld(
+                userId: userId,
+                worldId: favoriteWorldId
+            )
+        } catch {
+            favoriteWorldId = oldFavoriteWorldId  // 失敗したら、押す前に戻す
+            errorMessage = "お気に入りを保存できませんでした。通信状態を確かめて、もう一度試してください。"
+        }
     }
 }
