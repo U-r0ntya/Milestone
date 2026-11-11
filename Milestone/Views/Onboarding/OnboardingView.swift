@@ -62,6 +62,6 @@ struct OnboardingView: View {
 
 #Preview {
     OnboardingView(
-        authViewModel: AuthViewModel(repository: PreviewUserRepository())
+        authViewModel: AuthViewModel(repository: MockUserRepository())
     )
 }

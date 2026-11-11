@@ -84,11 +84,6 @@ struct LoginView: View {
 }
 
 #Preview {
-    LoginView(authViewModel: AuthViewModel(repository: PreviewUserRepository()))
+    LoginView(authViewModel: AuthViewModel(repository: MockUserRepository()))
 }
 
-// プレビュー用の偽物の名簿係（通信しない）
-struct PreviewUserRepository: UserRepository {
-    func fetchUser(uid: String) async throws -> User? { nil }
-    func saveUser(_ user: User) async throws {}
-}
