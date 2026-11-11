@@ -6,15 +6,28 @@ struct WorldListView: View {
     @State private var viewModel: WorldListViewModel
 
     // ほかの画面と同じ2つの init（MainActor の都合）
+    // お気に入りの最初の値は、ここで渡す（.task で入れると、タブを戻るたびに古い値で上書きされる）
     init(user: User) {
         self.user = user
-        _viewModel = State(initialValue: WorldListViewModel())
+        _viewModel = State(
+            initialValue: WorldListViewModel(
+                favoriteWorldId: user.favoriteWorldId
+            )
+        )
     }
 
-    init(user: User, repository: WorldRepository) {
+    init(
+        user: User,
+        repository: WorldRepository,
+        userRepository: UserRepository
+    ) {
         self.user = user
         _viewModel = State(
-            initialValue: WorldListViewModel(repository: repository)
+            initialValue: WorldListViewModel(
+                repository: repository,
+                userRepository: userRepository,
+                favoriteWorldId: user.favoriteWorldId
+            )
         )
     }
 
@@ -122,7 +135,9 @@ struct WorldListView: View {
         }
     }
 
-    private func sectionHeader(_ title: String, systemImage: String) -> some View {
+    private func sectionHeader(_ title: String, systemImage: String)
+        -> some View
+    {
         Label(title, systemImage: systemImage)
             .font(.headline)
             .foregroundStyle(Color.appTextPrimary)
@@ -151,7 +166,8 @@ struct WorldListView: View {
                 device: .nintendoSwitch,
                 bio: nil
             ),
-            repository: MockWorldRepository()
+            repository: MockWorldRepository(),
+            userRepository: MockUserRepository()
         )
         .appHeader("ワールド")
     }

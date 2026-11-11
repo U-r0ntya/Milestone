@@ -17,7 +17,7 @@ struct ProfileView: View {
 }
 #Preview {
     ProfileView(
-        authViewModel: AuthViewModel(repository: PreviewUserRepository()),
+        authViewModel: AuthViewModel(repository: MockUserRepository()),
         user: User(
             id: "preview",
             name: "すてぃーぶ",

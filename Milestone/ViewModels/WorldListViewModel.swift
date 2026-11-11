@@ -9,18 +9,30 @@ final class WorldListViewModel {
     var worlds: [World] = []  // 自分のワールド（新しく登録した順）
     var isLoading: Bool = false  // 読みこみ中か
     var errorMessage: String?  // 読みこめなかったときの文
-    var favoriteWorldId: String?  // お気に入りのワールドの ID（保存は 6-4 でユーザーに持たせる。今は画面の中だけ）
+    var favoriteWorldId: String?  // お気に入りのワールドの ID（ログイン中の人の User から受け取り、星を押すと Firestore に保存する）
+    var isSavingFavorite = false  // お気に入りを保存中か（連打を防ぐ）
 
     // ワールドを読み書きする係
     private let repository: WorldRepository
+    // ユーザーを書きかえる係（お気に入りの保存に使う）
+    private let userRepository: UserRepository
 
     // ほかの ViewModel と同じ2つの init（MainActor の都合）
-    init() {
+    // favoriteWorldId：最初のお気に入り（ログイン中の人の user.favoriteWorldId）
+    init(favoriteWorldId: String?) {
         self.repository = FirestoreWorldRepository()
+        self.userRepository = FirestoreUserRepository()
+        self.favoriteWorldId = favoriteWorldId
     }
 
-    init(repository: WorldRepository) {
+    init(
+        repository: WorldRepository,
+        userRepository: UserRepository,
+        favoriteWorldId: String?
+    ) {
         self.repository = repository
+        self.userRepository = userRepository
+        self.favoriteWorldId = favoriteWorldId
     }
 
     // 自分のワールドを読みこむ（ownerId はログイン中の人の ID）

@@ -10,6 +10,14 @@ protocol UserRepository {
     func updateFavoriteWorld(userId: String,worldId:String?)async throws
 }
 
+// プレビュー用の係（通信しない。Firestore を使わず、何も返さない・保存しない）
+struct MockUserRepository: UserRepository {
+    func fetchUser(uid: String) async throws -> User? { nil }
+    func saveUser(_ user: User) async throws {}
+    func updateFavoriteWorld(userId: String,worldId:String?)async throws{}  // プレビューでは保存しない
+}
+
+// Firestore で読み書きする係
 struct FirestoreUserRepository: UserRepository {
     let db = Firestore.firestore()
 
