@@ -157,20 +157,20 @@
 | 持ち主のユーザー ID | ownerId | String | ○ | User から |
 | 機種 | device | Device | ○ | User から（変えるときは User の側で変える） |
 | 登録した日時 | createdAt | Date | ○ | アプリが自動で入れる |
-| ワールドの名前 | name | String | ○ | 入力、または level.dat（LevelName） |
-| シード値 | seed | Int64? |  | 入力、または level.dat（RandomSeed） |
-| ゲームモード | gameMode | GameMode | ○ | 入力、または level.dat（GameType） |
-| 難易度 | difficulty | Difficulty? |  | 入力、または level.dat（Difficulty） |
-| スポーン地点 | spawnPoint | BlockPosition? |  | 入力、または level.dat（SpawnX / Y / Z） |
+| ワールドの名前 | name | String | ○ | level.dat（LevelName） |
+| シード値 | seed | Int64? |  | level.dat（RandomSeed） |
+| ゲームモード | gameMode | GameMode | ○ | level.dat（GameType） |
+| 難易度 | difficulty | Difficulty? |  | level.dat（Difficulty） |
+| スポーン地点 | spawnPoint | BlockPosition? |  | level.dat（SpawnX / Y / Z） |
 | 最後に開いたバージョン | lastOpenedVersion | String? |  | level.dat（lastOpenedWithVersion）から。変えられない |
-| 最後に遊んだ日時 | lastPlayed | Date? |  | 入力、または level.dat（LastPlayed） |
-| 始まってからの時間 | time | Int64? |  | 入力、または level.dat（Time。24000 で 1 日） |
-| ワールドの種類 | worldType | WorldType? |  | 入力、または level.dat（Generator） |
-| チートが有効か | commandsEnabled | Bool | ○ | 入力、または level.dat（commandsEnabled）。初期値 false |
-| クリエイティブやチートを使ったか | hasUsedCheats | Bool? |  | 入力、または level.dat（hasBeenLoadedInCreative） |
-| マルチプレイができるか | isMultiplayer | Bool | ○ | 入力、または level.dat（MultiplayerGame）。初期値 true |
-| リソースパックが必須か | texturePacksRequired | Bool? |  | 入力、または level.dat（texturePacksRequired） |
-| プレイヤーの権限 | playerPermission | PermissionLevel? |  | 入力、または level.dat（playerPermissionsLevel） |
+| 最後に遊んだ日時 | lastPlayed | Date? |  | level.dat（LastPlayed） |
+| 始まってからの時間 | time | Int64? |  | level.dat（Time。24000 で 1 日） |
+| ワールドの種類 | worldType | WorldType? |  | level.dat（Generator） |
+| チートが有効か | commandsEnabled | Bool | ○ | level.dat（commandsEnabled）。初期値 false |
+| クリエイティブやチートを使ったか | hasUsedCheats | Bool? |  | level.dat（hasBeenLoadedInCreative） |
+| マルチプレイができるか | isMultiplayer | Bool | ○ | level.dat（MultiplayerGame）。初期値 true |
+| リソースパックが必須か | texturePacksRequired | Bool? |  | level.dat（texturePacksRequired） |
+| プレイヤーの権限 | playerPermission | PermissionLevel? |  | level.dat（playerPermissionsLevel） |
 
 level.dat の中の名前と値は、技術検証で自分のワールドを読んで確かめる。
 
