@@ -35,6 +35,10 @@ final class WorldImportViewModel {
             errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
             return
         }
+        guard url.lastPathComponent == "level.dat" else {
+            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
+            return
+        }
         defer { url.stopAccessingSecurityScopedResource() }  // この関数を抜けるときに、必ず読み終わりを伝える
         // Data にする → NBTReader で辞書にする → LevelDatParser で World にする → world に入れる
         do {

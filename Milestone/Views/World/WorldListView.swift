@@ -4,6 +4,12 @@ import SwiftUI
 struct WorldListView: View {
     let user: User  // ログイン中の人
     @State private var viewModel: WorldListViewModel
+    @State private var isShowingImport = false  // 登録の画面（シート）を出しているか
+
+    // ワールドを登録できる機種か（level.dat を取り出せるのは、iPhone と iPad だけ）
+    private var canImport: Bool {
+        user.device == .iPhone || user.device == .iPad
+    }
 
     // ほかの画面と同じ2つの init（MainActor の都合）
     // お気に入りの最初の値は、ここで渡す（.task で入れると、タブを戻るたびに古い値で上書きされる）
@@ -34,10 +40,22 @@ struct WorldListView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                registerCard
+                // 登録できる機種には「ワールドを登録」、できない機種には説明を出す
+                if canImport {
+                    registerCard
+                } else {
+                    unsupportedCard
+                }
                 content
             }
             .padding(16)
+        }
+        // 「ワールドを登録」を押すと、登録の画面が下から出る
+        .sheet(isPresented: $isShowingImport) {
+            WorldImportView(user: user) {
+                // 登録できたら、一覧を読みこみなおす
+                Task { await viewModel.loadWorlds(ownerId: user.id) }
+            }
         }
         .refreshable {
             await viewModel.loadWorlds(ownerId: user.id)  // 引っ張って更新
@@ -47,10 +65,10 @@ struct WorldListView: View {
         }
     }
 
-    // 「ワールドを登録」のカード（登録の画面は 6-5 で作る）
+    // 「ワールドを登録」のカード（押すと、登録の画面を開く）
     private var registerCard: some View {
         Button {
-            // 6-5 で、登録の画面を開く
+            isShowingImport = true
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "plus")
@@ -62,7 +80,7 @@ struct WorldListView: View {
                     Text("ワールドを登録")
                         .font(.headline)
                         .foregroundStyle(Color.appTextPrimary)
-                    Text("level.dat を読みこむ、または手で入力")
+                    Text("level.dat を選んで読みこむ")
                         .font(.caption)
                         .foregroundStyle(Color.appTextSecondary)
                 }
@@ -80,6 +98,38 @@ struct WorldListView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    // 登録できない機種に出す説明（Switch・PlayStation・Xbox・Android・Windows など）
+    private var unsupportedCard: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "cube")
+                .font(.title2)
+                .foregroundStyle(Color.appTagText)
+                .frame(width: 56, height: 56)
+                .background(Color.appTagBackground, in: Circle())
+            Text("ワールドの登録は、iPhone・iPad でマイクラを遊んでいる人だけが使えます")
+                .font(.headline)
+                .foregroundStyle(Color.appTextPrimary)
+            Text(
+                "あなたの機種（\(user.device.displayName)）では、ワールドのファイルを取り出せないため、登録できません。"
+            )
+            .font(.footnote)
+            .foregroundStyle(Color.appTextSecondary)
+            Divider()
+            Text("投稿には、バージョン・機種・シード値を手で入力して付けられます。")
+                .font(.footnote)
+                .foregroundStyle(Color.appTextSecondary)
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 28)
+        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.appCardBorder, lineWidth: 1)
+        )
     }
 
     // ワールドがあるか・読み込み中か・エラーかで、出すものを切り替える
@@ -100,13 +150,14 @@ struct WorldListView: View {
                 }
                 .buttonStyle(.primary)
             }
-        } else {
+        } else if canImport {
             ContentUnavailableView(
                 "まだワールドがありません",
                 systemImage: "cube",
                 description: Text("上の「ワールドを登録」から、最初のワールドを登録してみよう")
             )
         }
+        // 登録できない機種は、上の説明のカードだけを出す
     }
 
     // お気に入り → 最近遊んだワールド → 残り（残りには見出しを付けない）

@@ -1,0 +1,277 @@
+import SwiftUI
+import UniformTypeIdentifiers
+
+// ワールドの登録の画面（シート）
+// level.dat を選ぶ → 読みこんだ内容を確かめる → 登録する
+struct WorldImportView: View {
+    let user: User  // ログイン中の人（持ち主と機種に使う）
+    let onSaved: () -> Void  // 登録できたときに、親（一覧）に知らせる
+    @State private var viewModel: WorldImportViewModel
+    @State private var isShowingFilePicker = false  // ファイルを選ぶ画面を出しているか
+    @Environment(\.dismiss) private var dismiss  // シートを閉じるための機能
+
+    // ほかの画面と同じ2つの init（MainActor の都合）
+    init(user: User, onSaved: @escaping () -> Void) {
+        self.user = user
+        self.onSaved = onSaved
+        _viewModel = State(initialValue: WorldImportViewModel())
+    }
+
+    // プレビュー用。world を渡すと、読みこみ成功の見た目から始まる
+    init(
+        user: User,
+        repository: WorldRepository,
+        world: World? = nil,
+        onSaved: @escaping () -> Void
+    ) {
+        self.user = user
+        self.onSaved = onSaved
+        let viewModel = WorldImportViewModel(repository: repository)
+        viewModel.world = world
+        _viewModel = State(initialValue: viewModel)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // 失敗したときの文（読みこみの失敗と、登録の失敗の両方）
+                    if let errorMessage = viewModel.errorMessage {
+                        errorBanner(errorMessage)
+                    }
+
+                    // 読みこめたら内容の確認、まだなら場所の説明とボタン
+                    if let world = viewModel.world {
+                        confirmSection(world)
+                    } else {
+                        guideCard
+                        pickButton
+                        Text("読みこんだ情報は、ワールドの名前のほかは、あとから変えられません。")
+                            .font(.caption)
+                            .foregroundStyle(Color.appTextSecondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .padding(16)
+            }
+            .appHeader("ワールドを登録")
+            .toolbar {
+                // 左上：キャンセル（何も登録せずに閉じる）
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("キャンセル") {
+                        dismiss()
+                    }
+                }
+            }
+            // ファイルを選ぶ画面（「ファイル」アプリと同じ見た目）
+            .fileImporter(
+                isPresented: $isShowingFilePicker,
+                allowedContentTypes: [.data]
+            ) { result in
+                switch result {
+                case .success(let url):
+                    // 選んだファイルを読みこむ
+                    viewModel.importLevelDat(
+                        from: url,
+                        ownerId: user.id,
+                        device: user.device
+                    )
+                case .failure:
+                    viewModel.errorMessage = "ファイルを開けませんでした。もう一度試してください。"
+                }
+            }
+            .animation(.default, value: viewModel.errorMessage)  // エラーの文をふわっと出す
+        }
+        .interactiveDismissDisabled(viewModel.isSaving)  // 登録中は、下にスワイプして閉じられないようにする
+    }
+
+    // 赤いエラーの文
+    private func errorBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.circle")
+            Text(message)
+                .font(.footnote.weight(.medium))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .foregroundStyle(Color.appErrorText)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            Color.appErrorBackground,
+            in: RoundedRectangle(cornerRadius: 12)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.appErrorBorder, lineWidth: 1)
+        )
+    }
+
+    // level.dat の場所の説明（3つの手順）
+    private var guideCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("level.dat の場所")
+                .font(.headline)
+                .foregroundStyle(Color.appTextPrimary)
+
+            step(1, "「ファイル」アプリを開く", "この\(user.device.displayName)内 → Minecraft")
+            step(
+                2,
+                "ワールドのフォルダまで進む",
+                "games → com.mojang → minecraftWorlds → ワールドのフォルダ"
+            )
+            step(3, "level.dat を選ぶ", "「level.dat_old」ではなく、「level.dat」のほう")
+
+            Divider()
+
+            Text("ワールドのフォルダは、記号がならんだ名前です。中の levelname.txt を開くと、ワールドの名前を確かめられます。")
+                .font(.caption)
+                .foregroundStyle(Color.appTextSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.appCardBorder, lineWidth: 1)
+        )
+    }
+
+    // 手順の1行：丸い番号・見出し・説明
+    private func step(_ number: Int, _ title: String, _ detail: String)
+        -> some View
+    {
+        HStack(alignment: .top, spacing: 10) {
+            Text("\(number)")
+                .font(.footnote.bold())
+                .foregroundStyle(Color.appTagText)
+                .frame(width: 24, height: 24)
+                .background(Color.appTagBackground, in: Circle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(Color.appTextPrimary)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(Color.appTextSecondary)
+            }
+        }
+    }
+
+    // 「ファイルを選ぶ」ボタン（失敗のあとも、同じ文のまま。文を変えるとレイアウトが動くため）
+    private var pickButton: some View {
+        Button {
+            isShowingFilePicker = true
+        } label: {
+            Label("ファイルを選ぶ", systemImage: "folder")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.primary)
+    }
+
+    // 読みこみ成功：内容の確認と、登録のボタン
+    @ViewBuilder
+    private func confirmSection(_ world: World) -> some View {
+        Label("読みこめました。内容を確かめてください", systemImage: "checkmark.circle")
+            .font(.subheadline.bold())
+            .foregroundStyle(Color.appTagText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+        // 一覧と同じ看板（星と開閉ボタンはなし。最初から全部見せる）
+        VStack(spacing: 0) {
+            WorldBannerView(
+                world: world,
+                isFavorite: false,
+                onToggleFavorite: {},
+                showsFavorite: false
+            )
+            WorldSubBannerView(world: world, ownerName: user.name)
+                .padding(.bottom, 6)
+        }
+        .background(world.gameMode.tintColor)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+
+        VStack(spacing: 4) {
+            // 登録する（登録中はぐるぐるを出して、押せなくする）
+            Button {
+                Task {
+                    await viewModel.save()
+                    // 登録できたら、親に知らせてシートを閉じる。失敗したら閉じずにエラーを見せる
+                    if viewModel.isSaved {
+                        onSaved()
+                        dismiss()
+                    }
+                }
+            } label: {
+                Group {
+                    if viewModel.isSaving {
+                        ProgressView().tint(.white)
+                    } else {
+                        Text("この内容で登録する")
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.primary)
+            .disabled(viewModel.isSaving)
+
+            // 別のファイルを選びなおす
+            Button("ファイルを選びなおす") {
+                isShowingFilePicker = true
+            }
+            .font(.subheadline.bold())
+            .foregroundStyle(Color.appTagText)
+            .frame(height: 44)
+            .disabled(viewModel.isSaving)
+        }
+    }
+}
+
+// 選ぶ前
+#Preview("選ぶ前") {
+    WorldImportView(
+        user: User(
+            id: "preview",
+            name: "たいき",
+            iconURL: nil,
+            device: .iPhone,
+            bio: nil
+        ),
+        repository: MockWorldRepository(),
+        onSaved: {}
+    )
+}
+
+// 読みこみ成功
+#Preview("読みこみ成功") {
+    WorldImportView(
+        user: User(
+            id: "preview",
+            name: "たいき",
+            iconURL: nil,
+            device: .iPhone,
+            bio: nil
+        ),
+        repository: MockWorldRepository(),
+        world: World(
+            id: "preview-world",
+            ownerId: "preview",
+            device: .iPhone,
+            createdAt: Date(),
+            name: "はじまりの島",
+            seed: 7_927_532_591_901_215_510,
+            gameMode: .survival,
+            difficulty: .normal,
+            spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
+            lastOpenedVersion: "1.26.52",
+            lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),  // 3時間前
+            time: 24000 * 120,  // 120日
+            worldType: .infinite,
+            commandsEnabled: false,
+            hasUsedCheats: false,
+            isMultiplayer: true,
+            texturePacksRequired: false,
+            playerPermission: .member
+        ),
+        onSaved: {}
+    )
+}
