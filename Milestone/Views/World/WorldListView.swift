@@ -52,7 +52,8 @@ struct WorldListView: View {
         }
         // 「ワールドを登録」を押すと、登録の画面が下から出る
         .sheet(isPresented: $isShowingImport) {
-            WorldImportView(user: user) {
+            // 今あるワールドも渡す（同じワールドを2回登録しないため）
+            WorldImportView(user: user, existingWorlds: viewModel.worlds) {
                 // 登録できたら、一覧を読みこみなおす
                 Task { await viewModel.loadWorlds(ownerId: user.id) }
             }

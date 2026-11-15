@@ -25,4 +25,5 @@ struct World: Codable, Identifiable, Hashable {
     let isMultiplayer: Bool  // マルチプレイができるか（MultiplayerGame）
     let texturePacksRequired: Bool?  // リソースパックが必須か（texturePacksRequired）
     let playerPermission: PermissionLevel?  // プレイヤーの権限（playerPermissionsLevel）
+    var folderName: String? = nil  // ワールドのフォルダ名（同じワールドを2回登録しないための目印）
 }

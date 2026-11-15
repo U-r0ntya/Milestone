@@ -16,15 +16,27 @@ final class WorldImportViewModel {
     var errorMessage: String? = nil
     // 登録が終わったか（画面を閉じる合図）
     var isSaved: Bool = false
+    // すでに登録してあるワールド（一覧から受け取る）
+    private let existingWorlds: [World]
+
+    // 読みこんだワールドが、すでに登録してあるか
+    var isDuplicate: Bool {
+        // 読みこんだワールドのフォルダ名を取り出す（なければ false）
+        guard let folderName = world?.folderName else { return false }
+        // existingWorlds の中に、同じフォルダ名のものがあれば true
+        return existingWorlds.contains { $0.folderName == folderName }
+    }
 
     // ワールドを保存する係
     private let repository: WorldRepository
 
-    init() {
+    init(existingWorlds: [World]) {
         self.repository = FirestoreWorldRepository()
+        self.existingWorlds = existingWorlds
     }
-    init(repository: WorldRepository) {
+    init(repository: WorldRepository, existingWorlds: [World]) {
         self.repository = repository
+        self.existingWorlds = existingWorlds
     }
 
     // level.dat を読みこんで World を作る
@@ -44,11 +56,13 @@ final class WorldImportViewModel {
         do {
             let data = try Data(contentsOf: url)
             let root = try NBTReader.readLevelDat(data)
-            world = try LevelDatParser.parse(
+            var world = try LevelDatParser.parse(
                 root,
                 ownerId: ownerId,
                 device: device
             )
+            world.folderName = url.deletingLastPathComponent().lastPathComponent
+            self.world = world
         } catch {
             errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"  //  失敗したら
         }
@@ -56,11 +70,13 @@ final class WorldImportViewModel {
 
     // 読みこんだワールドを登録する
     func save() async {
-        errorMessage = nil
+        // すでに読み込んであるワールドか（あれば何もしない）
+        guard !isDuplicate else { return }
         // 読みこんだワールドがなければ、何もしない
         guard let world else { return }
         // 登録中にもう一度呼ばれたら、何もしない
-        guard isSaving == false else { return }
+        guard !isSaving else { return }
+        errorMessage = nil
         // 登録を始めた。抜けるときに必ず false に戻す
         isSaving = true
         defer { isSaving = false }

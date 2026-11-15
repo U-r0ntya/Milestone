@@ -11,22 +11,33 @@ struct WorldImportView: View {
     @Environment(\.dismiss) private var dismiss  // シートを閉じるための機能
 
     // ほかの画面と同じ2つの init（MainActor の都合）
-    init(user: User, onSaved: @escaping () -> Void) {
+    // existingWorlds：すでに登録してあるワールド（同じワールドを2回登録しないために使う）
+    init(
+        user: User,
+        existingWorlds: [World],
+        onSaved: @escaping () -> Void
+    ) {
         self.user = user
         self.onSaved = onSaved
-        _viewModel = State(initialValue: WorldImportViewModel())
+        _viewModel = State(
+            initialValue: WorldImportViewModel(existingWorlds: existingWorlds)
+        )
     }
 
     // プレビュー用。world を渡すと、読みこみ成功の見た目から始まる
     init(
         user: User,
         repository: WorldRepository,
+        existingWorlds: [World] = [],
         world: World? = nil,
         onSaved: @escaping () -> Void
     ) {
         self.user = user
         self.onSaved = onSaved
-        let viewModel = WorldImportViewModel(repository: repository)
+        let viewModel = WorldImportViewModel(
+            repository: repository,
+            existingWorlds: existingWorlds
+        )
         viewModel.world = world
         _viewModel = State(initialValue: viewModel)
     }
@@ -38,6 +49,10 @@ struct WorldImportView: View {
                     // 失敗したときの文（読みこみの失敗と、登録の失敗の両方）
                     if let errorMessage = viewModel.errorMessage {
                         errorBanner(errorMessage)
+                    }
+                    // すでに登録してあるワールドを選んだときの文
+                    if viewModel.isDuplicate {
+                        errorBanner("このワールドは、すでに登録してあります。別のワールドの level.dat を選んでください。")
                     }
 
                     // 読みこめたら内容の確認、まだなら場所の説明とボタン
@@ -188,10 +203,16 @@ struct WorldImportView: View {
                 .padding(.bottom, 6)
         }
         .background(world.gameMode.tintColor)
+        // すでに登録してあるときは、カードに背景の色（ライトなら白）を薄く重ねて、登録できないことを見せる
+        .overlay {
+            if viewModel.isDuplicate {
+                Color.appBackground.opacity(0.6)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: 16))
 
         VStack(spacing: 4) {
-            // 登録する（登録中はぐるぐるを出して、押せなくする）
+            // 登録する（登録中はぐるぐるを出して、押せなくする。すでに登録してあるときも押せない）
             Button {
                 Task {
                     await viewModel.save()
@@ -212,7 +233,7 @@ struct WorldImportView: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.primary)
-            .disabled(viewModel.isSaving)
+            .disabled(viewModel.isSaving || viewModel.isDuplicate)
 
             // 別のファイルを選びなおす
             Button("ファイルを選びなおす") {
@@ -272,6 +293,45 @@ struct WorldImportView: View {
             texturePacksRequired: false,
             playerPermission: .member
         ),
+        onSaved: {}
+    )
+}
+
+// すでに登録してあるワールドを選んだとき
+#Preview("登録済み") {
+    // 同じフォルダ名のワールドを、「登録してあるワールド」と「読みこんだワールド」の両方に渡す
+    let world = World(
+        id: "preview-world",
+        ownerId: "preview",
+        device: .iPhone,
+        createdAt: Date(),
+        name: "はじまりの島",
+        seed: 7_927_532_591_901_215_510,
+        gameMode: .survival,
+        difficulty: .normal,
+        spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
+        lastOpenedVersion: "1.26.52",
+        lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),  // 3時間前
+        time: 24000 * 120,  // 120日
+        worldType: .infinite,
+        commandsEnabled: false,
+        hasUsedCheats: false,
+        isMultiplayer: true,
+        texturePacksRequired: false,
+        playerPermission: .member,
+        folderName: "preview-folder"
+    )
+    return WorldImportView(
+        user: User(
+            id: "preview",
+            name: "たいき",
+            iconURL: nil,
+            device: .iPhone,
+            bio: nil
+        ),
+        repository: MockWorldRepository(),
+        existingWorlds: [world],
+        world: world,
         onSaved: {}
     )
 }

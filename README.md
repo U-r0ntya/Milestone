@@ -171,8 +171,11 @@
 | マルチプレイができるか | isMultiplayer | Bool | ○ | level.dat（MultiplayerGame）。初期値 true |
 | リソースパックが必須か | texturePacksRequired | Bool? |  | level.dat（texturePacksRequired） |
 | プレイヤーの権限 | playerPermission | PermissionLevel? |  | level.dat（playerPermissionsLevel） |
+| ワールドのフォルダ名 | folderName | String? |  | 選んだ level.dat が入っているフォルダの名前。同じワールドを 2 回登録しないための目印 |
 
 level.dat の中の名前と値は、技術検証で自分のワールドを読んで確かめる。
+
+同じワールドかどうかは、フォルダ名（folderName）で見分ける。level.dat の中には、ワールドごとの決まった ID がないため。すでに登録してあるワールドの level.dat を選んだときは、内容は見せるが、登録はできない。情報を新しくするのは、ワールドの情報の画面から行う。
 
 ### enum と struct
 | 型 | 値 |
@@ -387,7 +390,7 @@ level.dat の中の名前と値は、技術検証で自分のワールドを読�
   - [ ] 6-4 お気に入り（User の favoriteWorldId、星マーク）
   - [ ] 6-5 level.dat の読み込み（「ファイル」アプリから選んで、読みこんだ内容を確かめて登録する。使えない機種には説明を出す）
   - [ ] 6-6 ワールドの名前の変更
-  - [ ] 6-7 ワールドの情報（全部の情報、名前の変更、お気に入り、削除）と、最後に情報の画面を開いた日時の記録（端末に覚え、一覧の並べ方にも使う）
+  - [ ] 6-7 ワールドの情報（全部の情報、名前の変更、お気に入り、level.dat を選びなおして情報を更新、削除）と、最後に情報の画面を開いた日時の記録（端末に覚え、一覧の並べ方にも使う）
   - [ ] 6-8 動作確認と README
 - [ ] フェーズ7：プロフィール `step/7-1-profile`
 - [ ] フェーズ8：余裕があれば（⓪〜③）`step/8-1-extra`
