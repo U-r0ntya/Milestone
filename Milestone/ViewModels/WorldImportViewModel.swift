@@ -30,12 +30,12 @@ final class WorldImportViewModel {
     // level.dat を読みこんで World を作る
     func importLevelDat(from url: URL, ownerId: String, device: Device) {
         errorMessage = nil
-        // ファイルを読む許可を取る
-        guard url.startAccessingSecurityScopedResource() else {
+        guard url.lastPathComponent == "level.dat" else {
             errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
             return
         }
-        guard url.lastPathComponent == "level.dat" else {
+        // ファイルを読む許可を取る
+        guard url.startAccessingSecurityScopedResource() else {
             errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
             return
         }
