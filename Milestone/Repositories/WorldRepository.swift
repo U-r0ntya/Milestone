@@ -19,7 +19,7 @@ struct MockWorldRepository: WorldRepository {
             World(
                 id: "preview-world-1",
                 ownerId: ownerId,
-                device: .nintendoSwitch,
+                device: .iPhone,
                 createdAt: Date().addingTimeInterval(-1 * 24 * 60 * 60),  // 1日前
                 name: "サバイバル1",
                 seed: -1_234_567_890_123,
@@ -34,28 +34,30 @@ struct MockWorldRepository: WorldRepository {
                 hasUsedCheats: false,
                 isMultiplayer: true,
                 texturePacksRequired: false,
-                playerPermission: .member
+                playerPermission: .member,
+                folderName: "preview-folder-1"
             ),
-            // 手で入力した場合の例（必須の項目だけ）
+            // クリエイティブの例（スポーン地点の高さがまだ決まっていないワールド）
             World(
                 id: "preview-world-2",
                 ownerId: ownerId,
-                device: .nintendoSwitch,
+                device: .iPhone,
                 createdAt: Date().addingTimeInterval(-7 * 24 * 60 * 60),  // 7日前
                 name: "建築用クリエイティブ",
-                seed: nil,
+                seed: 987_654_321,
                 gameMode: .creative,
-                difficulty: nil,
+                difficulty: .peaceful,
                 spawnPoint: nil,
-                lastOpenedVersion: nil,
-                lastPlayed: nil,
-                time: nil,
-                worldType: nil,
+                lastOpenedVersion: "1.26.52",
+                lastPlayed: Date().addingTimeInterval(-2 * 24 * 60 * 60),  // 2日前
+                time: 24000 * 30,  // 30日
+                worldType: .flat,
                 commandsEnabled: true,
-                hasUsedCheats: nil,
+                hasUsedCheats: true,
                 isMultiplayer: true,
-                texturePacksRequired: nil,
-                playerPermission: nil
+                texturePacksRequired: false,
+                playerPermission: .operator,
+                folderName: "preview-folder-2"
             ),
         ]
     }

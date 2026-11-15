@@ -65,7 +65,7 @@ struct WorldSubBannerView: View {
                 }
             }
 
-            // ランク（サバイバルで、日数（time）があるときだけ。手で入力したワールドは出さない）
+            // ランク（サバイバルで、日数（time）があるときだけ）
             if world.gameMode == .survival, world.time != nil {
                 WorldRankView(rank: WorldRank(world: world))
             }

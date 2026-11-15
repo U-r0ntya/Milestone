@@ -52,7 +52,7 @@ final class WorldListViewModel {
         }
     }
 
-    // 並べ方に使う日時（最後に遊んだ日時。ない（手で入力した）ときは登録した日時）
+    // 並べ方に使う日時（最後に遊んだ日時。level.dat に入っていなかったときは登録した日時）
     // 6-4 で、情報の画面を開いた日時（端末に覚える）も比べるようにする
     private func playedDate(of world: World) -> Date {
         world.lastPlayed ?? world.createdAt
