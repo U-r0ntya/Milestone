@@ -157,7 +157,7 @@
 | 持ち主のユーザー ID | ownerId | String | ○ | User から |
 | 機種 | device | Device | ○ | User から（変えるときは User の側で変える） |
 | 登録した日時 | createdAt | Date | ○ | アプリが自動で入れる |
-| ワールドの名前 | name | String | ○ | level.dat（LevelName） |
+| ワールドの名前 | name | String | ○ | level.dat（LevelName）。登録のあとは書きかえない |
 | シード値 | seed | Int64? |  | level.dat（RandomSeed） |
 | ゲームモード | gameMode | GameMode | ○ | level.dat（GameType） |
 | 難易度 | difficulty | Difficulty? |  | level.dat（Difficulty） |
@@ -171,6 +171,7 @@
 | マルチプレイができるか | isMultiplayer | Bool | ○ | level.dat（MultiplayerGame）。初期値 true |
 | リソースパックが必須か | texturePacksRequired | Bool? |  | level.dat（texturePacksRequired） |
 | プレイヤーの権限 | playerPermission | PermissionLevel? |  | level.dat（playerPermissionsLevel） |
+| アプリでの名前 | customName | String? |  | 名前の変更で付けた名前（1〜30 文字、前後の空白は取りのぞく）。あれば、name より先に表示する。level.dat を読みなおしても消さない |
 | ワールドのフォルダ名 | folderName | String? |  | 選んだ level.dat が入っているフォルダの名前。同じワールドを 2 回登録しないための目印 |
 
 level.dat の中の名前と値は、技術検証で自分のワールドを読んで確かめる。
@@ -396,7 +397,7 @@ level.dat の中の名前と値は、技術検証で自分のワールドを読�
     - level.dat という名前のファイルだけを読む（level.dat_old などは断る）
     - 同じワールドは 2 回登録できない（フォルダ名で見分ける。内容は見せるが、登録ボタンは押せない）
     - 動作確認 OK（2026-11-15）：実機の iPhone で、level.dat を選んで登録でき、一覧に出る。違うファイルと、登録済みのワールドは登録できない
-  - [ ] 6-6 ワールドの情報の画面（全部の情報を見る、お気に入り）と、名前の変更（1〜30 文字。前後の空白は取りのぞく）
+  - [ ] 6-6 ワールドの情報の画面（全部の情報を見る、お気に入り）と、名前の変更（1〜30 文字。前後の空白は取りのぞく。level.dat の名前（name）は残し、アプリでの名前（customName）を別に持つ）
   - [ ] 6-7 level.dat を選びなおして情報を更新（アプリで付けた名前は残す）、削除、最後に情報の画面を開いた日時の記録（端末に覚え、一覧の並べ方にも使う）
   - [ ] 6-8 動作確認と README
 - [ ] フェーズ7：プロフィール `step/7-1-profile`

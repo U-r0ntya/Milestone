@@ -5,8 +5,9 @@ import UIKit
 // 一覧のカードを押すと、ここに進む。レイアウトを見るための土台（ボタンはまだ動かない。シード値のコピーだけ動く）
 struct WorldDetailView: View {
     let user: User  // ログイン中の人
-    let world: World
-    let viewModel: WorldListViewModel  // お気に入りの切りかえに使う（一覧と同じものを受け取る）
+    let worldId: String  // 表示するワールドの ID
+    let viewModel: WorldListViewModel  // お気に入り・名前の変更に使う（一覧と同じものを受け取る）
+    @State private var isShowingRename = false  // 名前を変える画面を出しているか
     @State private var didCopySeed = false  // シード値をコピーしたか（アイコンを切りかえる）
 
     // 表の1行
@@ -25,7 +26,7 @@ struct WorldDetailView: View {
     }
 
     // 入っているデータは、全部出す（Optional の項目は、値がなければ行を出さない）
-    private var sections: [InfoGroup] {
+    private func sections(for world: World) -> [InfoGroup] {
         // ワールド
         var worldRows: [Row] = [
             Row(label: "ゲームモード", value: world.gameMode.displayName)
@@ -78,6 +79,9 @@ struct WorldDetailView: View {
         recordRows.append(Row(label: "登録した日時", value: dateText(world.createdAt)))
         recordRows.append(Row(label: "機種", value: world.device.displayName))
         recordRows.append(Row(label: "持ち主", value: user.name))
+        if world.customName != nil {
+            recordRows.append(Row(label: "level.dat の名前", value: world.name))
+        }
         if let folderName = world.folderName {
             recordRows.append(Row(label: "フォルダ名", value: folderName))
         }
@@ -97,7 +101,23 @@ struct WorldDetailView: View {
         )
     }
 
+    // 一覧のデータから、ID が同じワールドを探す（名前を変えると、ここも新しくなる）
+    private var world: World? {
+        viewModel.worlds.first { $0.id == worldId }
+    }
+
     var body: some View {
+        Group {
+            if let world {
+                content(world)
+            } else {
+                ContentUnavailableView("ワールドが見つかりません", systemImage: "cube")
+            }
+        }
+        .appHeader("ワールドの情報")
+    }
+
+    private func content(_ world: World) -> some View {
         ScrollView {
             VStack(spacing: 16) {
                 // 大看板（星でお気に入りを切りかえる）
@@ -124,7 +144,7 @@ struct WorldDetailView: View {
                     }
                 }
 
-                ForEach(sections) { section in
+                ForEach(sections(for: world)) { section in
                     sectionCard(section)
                 }
 
@@ -132,13 +152,16 @@ struct WorldDetailView: View {
             }
             .padding(16)
         }
-        .appHeader("ワールドの情報")
+        // 名前を変える画面（下から出る）
+        .sheet(isPresented: $isShowingRename) {
+            WorldRenameView(world: world, viewModel: viewModel)
+        }
     }
 
     // 「名前を変える」の行（押すと、入力の小さな画面を出す。まだ動かない）
     private var renameRow: some View {
         Button {
-            // TODO: 名前を変える画面（シート）を出す
+            isShowingRename = true
         } label: {
             HStack {
                 Label("ワールド名を変える", systemImage: "pencil")
@@ -245,7 +268,36 @@ struct WorldDetailView: View {
 }
 
 #Preview {
-    NavigationStack {
+    // 見本のワールドを入れた ViewModel（情報の画面は、一覧のデータから ID で探して出す）
+    let viewModel = WorldListViewModel(
+        repository: MockWorldRepository(),
+        userRepository: MockUserRepository(),
+        favoriteWorldId: nil
+    )
+    viewModel.worlds = [
+        World(
+            id: "preview-world-1",
+            ownerId: "preview",
+            device: .iPhone,
+            createdAt: Date().addingTimeInterval(-24 * 60 * 60),
+            name: "サバイバル1",
+            seed: -1_234_567_890_123,
+            gameMode: .survival,
+            difficulty: .normal,
+            spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
+            lastOpenedVersion: "1.21.40",
+            lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),
+            time: 240_000_000,
+            worldType: .infinite,
+            commandsEnabled: false,
+            hasUsedCheats: false,
+            isMultiplayer: true,
+            texturePacksRequired: false,
+            playerPermission: .member,
+            folderName: "preview-folder-1"
+        )
+    ]
+    return NavigationStack {
         WorldDetailView(
             user: User(
                 id: "preview",
@@ -254,32 +306,8 @@ struct WorldDetailView: View {
                 device: .iPhone,
                 bio: nil
             ),
-            world: World(
-                id: "preview-world-1",
-                ownerId: "preview",
-                device: .iPhone,
-                createdAt: Date().addingTimeInterval(-24 * 60 * 60),
-                name: "サバイバル1",
-                seed: -1_234_567_890_123,
-                gameMode: .survival,
-                difficulty: .normal,
-                spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
-                lastOpenedVersion: "1.21.40",
-                lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),
-                time: 240_000_000,
-                worldType: .infinite,
-                commandsEnabled: false,
-                hasUsedCheats: false,
-                isMultiplayer: true,
-                texturePacksRequired: false,
-                playerPermission: .member,
-                folderName: "preview-folder-1"
-            ),
-            viewModel: WorldListViewModel(
-                repository: MockWorldRepository(),
-                userRepository: MockUserRepository(),
-                favoriteWorldId: nil
-            )
+            worldId: "preview-world-1",
+            viewModel: viewModel
         )
     }
 }

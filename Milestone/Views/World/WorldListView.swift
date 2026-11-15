@@ -60,7 +60,7 @@ struct WorldListView: View {
         }
         // NavigationLink で渡されたワールドを受け取って、情報の画面を出す
         .navigationDestination(for: World.self) { world in
-            WorldDetailView(user: user, world: world, viewModel: viewModel)
+            WorldDetailView(user: user, worldId: world.id, viewModel: viewModel)
         }
         .refreshable {
             await viewModel.loadWorlds(ownerId: user.id)  // 引っ張って更新

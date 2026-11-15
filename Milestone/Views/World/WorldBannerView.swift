@@ -21,7 +21,7 @@ struct WorldBannerView: View {
                 )
 
             // ワールド名（右に星のぶんの余白を空けて、星と重ならないようにする）
-            Text(world.name)
+            Text(world.displayName)
                 .font(.title3.bold())
                 .foregroundStyle(.white)
                 .lineLimit(1)
