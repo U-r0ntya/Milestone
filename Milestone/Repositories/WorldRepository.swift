@@ -9,6 +9,8 @@ protocol WorldRepository {
     func saveWorld(_ world: World) async throws
     /// ワールドを消す
     func deleteWorld(id: String) async throws
+    /// アプリでの名前（customName）だけを書きかえる
+    func updateCustomName(id: String, customName: String) async throws
 }
 
 // プレビュー用の係（Firestore を使わず、見本のワールドを返す）
@@ -69,6 +71,10 @@ struct MockWorldRepository: WorldRepository {
     func deleteWorld(id: String) async throws {
         // Mock は消さない
     }
+
+    func updateCustomName(id: String, customName: String) async throws {
+        // Mock は保存しない
+    }
 }
 
 // Firestore で読み書きする係
@@ -103,5 +109,12 @@ struct FirestoreWorldRepository: WorldRepository {
     func deleteWorld(id: String) async throws {
         // 場所.delete() で、その場所のドキュメントを消せる（通信する）
         try await db.collection("worlds").document(id).delete()
+    }
+
+    // アプリでの名前だけを書きかえる（updateData は、ほかのフィールドを残して、指定したものだけ変える）
+    func updateCustomName(id: String, customName: String) async throws {
+        try await db.collection("worlds").document(id).updateData([
+            "customName": customName
+        ])
     }
 }

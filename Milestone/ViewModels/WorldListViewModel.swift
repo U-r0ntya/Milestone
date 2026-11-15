@@ -11,6 +11,8 @@ final class WorldListViewModel {
     var errorMessage: String?  // 読みこめなかったときの文
     var favoriteWorldId: String?  // お気に入りのワールドの ID（ログイン中の人の User から受け取り、星を押すと Firestore に保存する）
     var isSavingFavorite = false  // お気に入りを保存中か（連打を防ぐ）
+    var isRenaming = false  // 名前を保存中か（連打を防ぐ）
+    var renameErrorMessage: String?  // 名前を保存できなかったときの文（名前の入力の画面の中に出す）
 
     // ワールドを読み書きする係
     private let repository: WorldRepository
@@ -101,6 +103,32 @@ final class WorldListViewModel {
         } catch {
             favoriteWorldId = oldFavoriteWorldId  // 失敗したら、押す前に戻す
             errorMessage = "お気に入りを保存できませんでした。通信状態を確かめて、もう一度試してください。"
+        }
+    }
+
+    // 名前を変える（アプリでの名前 customName に保存する）。成功したら true
+    func renameWorld(id: String, to newName: String) async -> Bool {
+        guard !isRenaming else { return false }  // 保存中にもう一度呼ばれたら何もしない
+        isRenaming = true  // 保存を始めた
+        defer { isRenaming = false }  // この関数を抜けるときに、必ず false に戻す
+
+        renameErrorMessage = nil
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)  // 前後の空白を取りのぞく
+        guard !trimmed.isEmpty, trimmed.count <= 30 else {
+            renameErrorMessage = "名前は、1〜30 文字で入力してください。"
+            return false
+        }
+        guard let index = worlds.firstIndex(where: { $0.id == id }) else {
+            return false  // 一覧にないワールドは、書きかえられない
+        }
+
+        do {
+            try await repository.updateCustomName(id: id, customName: trimmed)
+            worlds[index].customName = trimmed  // 保存できたら、画面のデータも書きかえる
+            return true
+        } catch {
+            renameErrorMessage = "名前を保存できませんでした。通信状態を確かめて、もう一度試してください。"
+            return false
         }
     }
 }

@@ -45,7 +45,8 @@ struct WorldCardView: View {
                     .font(.footnote.bold())
                     .rotationEffect(.degrees(isOpen ? 180 : 0))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 24)
+                    .frame(height: 40)  // 押しやすいように高くする（指で押せる大きさは 44pt くらいが目安）
+                    .contentShape(Rectangle())  // 透明なところも、押せる範囲に入れる
             }
             .buttonStyle(.plain)
             .foregroundStyle(world.gameMode.accentColor)

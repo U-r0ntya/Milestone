@@ -6,12 +6,13 @@ import Foundation
 // - Codable：Firestore に保存する・読むため（プロパティの名前がそのままフィールドの名前になる）
 // - Identifiable：id を持っている。一覧の ForEach で id: を書かずに使える
 // - Hashable：同じかどうかを速く比べられる。一覧から情報の画面へ NavigationLink(value:) で進むのに使う
-struct World: Codable, Identifiable, Hashable {
+struct World: Codable, Identifiable, Hashable{
     let id: String  // ワールド ID（アプリが自動で入れる）
     let ownerId: String  // 持ち主のユーザー ID（User から）
     let device: Device  // 機種（User から）
     let createdAt: Date  // 登録した日時（アプリが自動で入れる）
     let name: String  // ワールドの名前（level.dat の LevelName）
+    var customName: String? = nil
     let seed: Int64?  // シード値（RandomSeed）
     let gameMode: GameMode  // ゲームモード（GameType）
     let difficulty: Difficulty?  // 難易度（Difficulty）
@@ -26,4 +27,9 @@ struct World: Codable, Identifiable, Hashable {
     let texturePacksRequired: Bool?  // リソースパックが必須か（texturePacksRequired）
     let playerPermission: PermissionLevel?  // プレイヤーの権限（playerPermissionsLevel）
     var folderName: String? = nil  // ワールドのフォルダ名（同じワールドを2回登録しないための目印）
+    
+    var displayName: String {
+        // カスタム名がなければ取得したワールド名を返す
+        customName ?? name
+    }
 }

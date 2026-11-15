@@ -58,6 +58,10 @@ struct WorldListView: View {
                 Task { await viewModel.loadWorlds(ownerId: user.id) }
             }
         }
+        // NavigationLink で渡されたワールドを受け取って、情報の画面を出す
+        .navigationDestination(for: World.self) { world in
+            WorldDetailView(user: user, worldId: world.id, viewModel: viewModel)
+        }
         .refreshable {
             await viewModel.loadWorlds(ownerId: user.id)  // 引っ張って更新
         }
@@ -198,6 +202,14 @@ struct WorldListView: View {
     }
 
     private func card(_ world: World, startsOpen: Bool) -> some View {
+        // カードを押すと、ワールドの情報の画面に進む（星と矢印のボタンは、それぞれ自分の動きを優先する）
+        NavigationLink(value: world) {
+            cardBody(world, startsOpen: startsOpen)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func cardBody(_ world: World, startsOpen: Bool) -> some View {
         WorldCardView(
             world: world,
             ownerName: user.name,
