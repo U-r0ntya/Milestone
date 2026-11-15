@@ -39,7 +39,8 @@ struct WorldSubBannerView: View {
                 if let lastPlayed = world.lastPlayed {
                     Label {
                         Text(
-                            "\(lastPlayed.formatted(.relative(presentation: .numeric, unitsStyle: .wide)))に遊んだ"
+                            // 「3時間前」のような表示。日本語で出すために、ロケールを指定する
+                            "\(lastPlayed.formatted(.relative(presentation: .numeric, unitsStyle: .wide).locale(Locale(identifier: "ja_JP"))))に遊んだ"
                         )
                     } icon: {
                         Image(systemName: "clock")
@@ -64,7 +65,7 @@ struct WorldSubBannerView: View {
                 }
             }
 
-            // ランク（サバイバルで、日数（time）があるときだけ。手で入力したワールドは出さない）
+            // ランク（サバイバルで、日数（time）があるときだけ）
             if world.gameMode == .survival, world.time != nil {
                 WorldRankView(rank: WorldRank(world: world))
             }

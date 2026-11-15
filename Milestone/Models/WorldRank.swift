@@ -4,7 +4,7 @@ import Foundation
 // World から毎回計算する（Firestore には保存しない）
 // 点 = ワールドの日数 × 倍率（小数は切り捨て）。点が増えると 木 → 石 → … → ネザライト と上がり、
 // ネザライトからは 365 点ごとに Lv. が上がる（上限なし）
-// 手で入力したワールドは日数（time）がないので、画面ではランクを出さない
+// level.dat に日数（time）が入っていなかったワールドは、画面ではランクを出さない
 struct WorldRank {
     // ランクの種類（木 → ネザライト）
     enum Tier: CaseIterable {
@@ -51,7 +51,7 @@ struct WorldRank {
     let daysToNext: Int  // 次のランク（ネザライトは次の Lv.）まで、あと何日
 
     init(world: World) {
-        // 日数（time は 24000 で 1 日。ない（手で入力した）ときは 0 日）
+        // 日数（time は 24000 で 1 日。level.dat に入っていなかったときは 0 日）
         let days = (world.time ?? 0) / 24000
 
         // 倍率：チートが有効なら半分、クリエイティブやチートを使ったなら、さらに半分

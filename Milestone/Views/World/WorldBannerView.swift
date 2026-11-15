@@ -6,6 +6,7 @@ struct WorldBannerView: View {
     let world: World
     let isFavorite: Bool  // お気に入りか
     let onToggleFavorite: () -> Void  // 星を押したときにすること
+    var showsFavorite: Bool = true  // 星を出すか（登録の画面では出さない）
 
     var body: some View {
         HStack(spacing: 12) {
@@ -32,30 +33,34 @@ struct WorldBannerView: View {
         .padding(.vertical, 12)
         // 右上：星（お気に入りの切りかえ）
         .overlay(alignment: .topTrailing) {
-            Button(action: onToggleFavorite) {
-                Image(systemName: isFavorite ? "star.fill" : "star")
-                    .font(.title3)
-                    .foregroundStyle(
-                        isFavorite
-                            ? Color(red: 0.5, green: 0.88, blue: 0.74)
-                            : .white.opacity(0.7)
-                    )
-                    .frame(width: 36, height: 36)
+            if showsFavorite {
+                Button(action: onToggleFavorite) {
+                    Image(systemName: isFavorite ? "star.fill" : "star")
+                        .font(.title3)
+                        .foregroundStyle(
+                            isFavorite
+                                ? Color(red: 0.5, green: 0.88, blue: 0.74)
+                                : .white.opacity(0.7)
+                        )
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(
+                    isFavorite ? "お気に入りから外す" : "お気に入りにする"
+                )
+                .padding(.top, 6)
+                .padding(.trailing, 6)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(
-                isFavorite ? "お気に入りから外す" : "お気に入りにする"
-            )
-            .padding(.top, 6)
-            .padding(.trailing, 6)
         }
-        // 右下：バージョン（バージョンがない＝手で入力したワールド。手入力ではバージョンを入れられない）
+        // 右下：バージョン（level.dat に入っていたときだけ出す）
         .overlay(alignment: .bottomTrailing) {
-            Text(world.lastOpenedVersion ?? "手動登録")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.white.opacity(0.85))
-                .padding(.trailing, 14)
-                .padding(.bottom, 10)
+            if let version = world.lastOpenedVersion {
+                Text(version)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .padding(.trailing, 14)
+                    .padding(.bottom, 10)
+            }
         }
         .background(world.gameMode.bannerColor)
     }
