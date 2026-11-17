@@ -263,7 +263,7 @@ struct WorldDetailView: View {
             .disabled(viewModel.isDeleting)
         }
         .padding(.top, 8)
-        // 確認（「削除する」を押したときだけ、消す）
+        // 確認（「削除する」を押したときだけ、消す。まわりを押せば、とじる）
         .confirmationDialog(
             "「\(world.displayName)」を削除しますか？",
             isPresented: $isShowingDeleteDialog,
@@ -276,7 +276,6 @@ struct WorldDetailView: View {
                     }
                 }
             }
-            Button("キャンセル", role: .cancel) {}
         } message: {
             Text("アプリの一覧から消えます。元には戻せません。マイクラのワールド本体は消えません。")
         }
