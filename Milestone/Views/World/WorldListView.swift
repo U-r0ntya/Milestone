@@ -49,21 +49,21 @@ struct WorldListView: View {
                 content
             }
             .padding(16)
+            // 結果のカードが出たとき、お気に入りが変わったときに、並びの変化に動きをつける
+            .animation(.snappy, value: viewModel.updateAllMessage)
+            .animation(.snappy, value: viewModel.favoriteWorldId)
         }
         // 上の帯の右：全部のワールドを、level.dat を読みなおして更新する
         .toolbar {
             if canImport, !viewModel.worlds.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if viewModel.isUpdatingAll {
-                        ProgressView()  // 更新中は、ぐるぐるを出す
-                    } else {
-                        Button {
-                            Task { await viewModel.updateAllWorlds() }
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                        }
-                        .accessibilityLabel("全部のワールドを更新")
+                    Button {
+                        Task { await viewModel.updateAllWorlds() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
                     }
+                    .disabled(viewModel.isUpdatingAll)  // 更新中は押せない（連打を防ぐ）
+                    .accessibilityLabel("全部のワールドを更新")
                 }
             }
         }
@@ -190,14 +190,16 @@ struct WorldListView: View {
             // 文字の 1 行目の線（ベースライン）にそろえる。アイコンも文字と同じ大きさにする
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "arrow.clockwise")
-                    .font(.footnote.bold())
+                    .font(.body.bold())
                     .foregroundStyle(Color.appTagText)
                 Text(message)
                     .font(.footnote)
                     .foregroundStyle(Color.appTextPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Button {
-                    viewModel.updateAllMessage = nil
+                    withAnimation(.snappy) {
+                        viewModel.updateAllMessage = nil  // カードを、動きをつけて消す
+                    }
                 } label: {
                     Image(systemName: "xmark")
                         .font(.footnote.bold())
@@ -212,6 +214,8 @@ struct WorldListView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.appCardBorder, lineWidth: 1)
             )
+            // 出るとき・消えるとき：上から少し動きながら、ふわっと出入りする
+            .transition(.move(edge: .top).combined(with: .opacity))
         }
 
         // 引っ張って更新に失敗したときは、前のワールドを残して上にエラーを出す

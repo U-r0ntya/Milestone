@@ -37,6 +37,8 @@ struct WorldBannerView: View {
                 Button(action: onToggleFavorite) {
                     Image(systemName: isFavorite ? "star.fill" : "star")
                         .font(.title3)
+                        .contentTransition(.symbolEffect(.replace))  // 星の形が、なめらかに入れかわる
+                        .symbolEffect(.bounce, value: isFavorite)  // 押したときに、ぴょんと弾む
                         .foregroundStyle(
                             isFavorite
                                 ? Color(red: 0.5, green: 0.88, blue: 0.74)
