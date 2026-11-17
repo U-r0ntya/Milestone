@@ -7,10 +7,10 @@ import Foundation
 // - Identifiable：id を持っている。一覧の ForEach で id: を書かずに使える
 // - Hashable：同じかどうかを速く比べられる。一覧から情報の画面へ NavigationLink(value:) で進むのに使う
 struct World: Codable, Identifiable, Hashable{
-    let id: String  // ワールド ID（アプリが自動で入れる）
+    var id: String  // ワールド ID（アプリが自動で入れる）
     let ownerId: String  // 持ち主のユーザー ID（User から）
     let device: Device  // 機種（User から）
-    let createdAt: Date  // 登録した日時（アプリが自動で入れる）
+    var createdAt: Date  // 登録した日時（アプリが自動で入れる）
     let name: String  // ワールドの名前（level.dat の LevelName）
     var customName: String? = nil
     let seed: Int64?  // シード値（RandomSeed）
