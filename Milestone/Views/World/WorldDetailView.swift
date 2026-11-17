@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 // ワールドの情報の画面：大看板・名前を変える・ランク・全部の情報・下のボタン
 // 一覧のカードを押すと、ここに進む。レイアウトを見るための土台（ボタンはまだ動かない。シード値のコピーだけ動く）
@@ -9,6 +10,9 @@ struct WorldDetailView: View {
     let viewModel: WorldListViewModel  // お気に入り・名前の変更に使う（一覧と同じものを受け取る）
     @State private var isShowingRename = false  // 名前を変える画面を出しているか
     @State private var isShowingDeleteDialog = false  // 削除の確認を出しているか
+    @State private var isShowingFilePicker = false  // 「ファイル」アプリの選ぶ画面を出しているか
+    @State private var didUpdate = false  // 更新できたか（「更新しました」を出す）
+    @State private var showsPickFallback = false  // 「ファイルを選びなおす」を出すか（ブックマークで失敗したとき）
     @Environment(\.dismiss) private var dismiss  // 削除できたら、一覧に戻るのに使う
     @State private var didCopySeed = false  // シード値をコピーしたか（アイコンを切りかえる）
 
@@ -237,12 +241,33 @@ struct WorldDetailView: View {
     private func bottomButtons(_ world: World) -> some View {
         VStack(spacing: 10) {
             Button {
-                // TODO(6-7): level.dat を選びなおして更新する
+                Task { await reloadFromBookmark() }
             } label: {
-                Text("level.dat を選びなおして更新")
+                Text(viewModel.isUpdating ? "更新中…" : "level.dat を読みなおして更新")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.secondary)
+            .disabled(viewModel.isUpdating)
+
+            // ブックマークで更新できなかったときは、ファイルを選びなおせるようにする
+            if showsPickFallback {
+                Button {
+                    isShowingFilePicker = true
+                } label: {
+                    Text("ファイルを選びなおす")
+                        .font(.subheadline.weight(.medium))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                }
+                .disabled(viewModel.isUpdating)
+            }
+
+            if didUpdate {
+                Text("更新しました")
+                    .font(.footnote)
+                    .foregroundStyle(Color.appTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             // 削除に失敗したときの文
             if let message = viewModel.errorMessage {
@@ -263,6 +288,14 @@ struct WorldDetailView: View {
             .disabled(viewModel.isDeleting)
         }
         .padding(.top, 8)
+        // 「ファイル」アプリで level.dat を選ぶ（選んだら、そのファイルで更新する）
+        .fileImporter(
+            isPresented: $isShowingFilePicker,
+            allowedContentTypes: [.data]
+        ) { result in
+            guard case .success(let url) = result else { return }
+            Task { await update(from: url) }
+        }
         // 確認（「削除する」を押したときだけ、消す。まわりを押せば、とじる）
         .confirmationDialog(
             "「\(world.displayName)」を削除しますか？",
@@ -279,6 +312,27 @@ struct WorldDetailView: View {
         } message: {
             Text("アプリの一覧から消えます。元には戻せません。マイクラのワールド本体は消えません。")
         }
+    }
+
+    // ブックマークから、前に選んだ level.dat を読んで更新する（ブックマークがなければ、選ぶ画面を出す）
+    private func reloadFromBookmark() async {
+        didUpdate = false
+        showsPickFallback = false
+        viewModel.errorMessage = nil
+        if let url = LevelDatBookmarkStore.resolve(for: worldId) {
+            await update(from: url)
+        } else {
+            isShowingFilePicker = true  // ブックマークがないワールドは、選んでもらう
+        }
+    }
+
+    // 指定の level.dat で更新する。失敗したら、「ファイルを選びなおす」を出す
+    private func update(from url: URL) async {
+        didUpdate = false
+        viewModel.errorMessage = nil
+        let isUpdated = await viewModel.updateWorld(worldId: worldId, from: url)
+        didUpdate = isUpdated
+        showsPickFallback = !isUpdated
     }
 
     // 白いカードの枠
