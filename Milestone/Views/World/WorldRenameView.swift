@@ -31,7 +31,7 @@ struct WorldRenameView: View {
                     .textFieldStyle(.roundedBorder)
 
                 HStack {
-                    if let message = viewModel.renameErrorMessage {
+                    if let message = viewModel.errorMessage {
                         Text(message)
                             .foregroundStyle(Color.appErrorText)
                     }
@@ -68,7 +68,7 @@ struct WorldRenameView: View {
             }
         }
         .presentationDetents([.medium])
-        .onAppear { viewModel.renameErrorMessage = nil }  // 前回のエラーを消す
+        .onAppear { viewModel.errorMessage = nil }  // 前回のエラーを消す
     }
 }
 

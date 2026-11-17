@@ -12,7 +12,7 @@ final class WorldListViewModel {
     var favoriteWorldId: String?  // お気に入りのワールドの ID（ログイン中の人の User から受け取り、星を押すと Firestore に保存する）
     var isSavingFavorite = false  // お気に入りを保存中か（連打を防ぐ）
     var isRenaming = false  // 名前を保存中か（連打を防ぐ）
-    var renameErrorMessage: String?  // 名前を保存できなかったときの文（名前の入力の画面の中に出す）
+    var isDeleting = false // ワールド削除中か
 
     // ワールドを読み書きする係
     private let repository: WorldRepository
@@ -112,10 +112,10 @@ final class WorldListViewModel {
         isRenaming = true  // 保存を始めた
         defer { isRenaming = false }  // この関数を抜けるときに、必ず false に戻す
 
-        renameErrorMessage = nil
+        errorMessage = nil
         let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)  // 前後の空白を取りのぞく
         guard !trimmed.isEmpty, trimmed.count <= 30 else {
-            renameErrorMessage = "名前は、1〜30 文字で入力してください。"
+            errorMessage = "名前は、1〜30 文字で入力してください。"
             return false
         }
         guard let index = worlds.firstIndex(where: { $0.id == id }) else {
@@ -127,7 +127,29 @@ final class WorldListViewModel {
             worlds[index].customName = trimmed  // 保存できたら、画面のデータも書きかえる
             return true
         } catch {
-            renameErrorMessage = "名前を保存できませんでした。通信状態を確かめて、もう一度試してください。"
+            errorMessage = "名前を保存できませんでした。通信状態を確かめて、もう一度試してください。"
+            return false
+        }
+    }
+    // ワールドを消す処理
+    // userId: 消す人、worldId: 消したいワールド
+    func deleteWorld(userId: String, worldId: String) async -> Bool {
+        guard !isDeleting else { return false }  // 保存中にもう一度呼ばれたら何もしない
+        isDeleting = true  // 保存を始めた
+        defer { isDeleting = false }  // この関数を抜けるときに、必ず false に戻す
+        errorMessage = nil
+        
+        do {
+            try await repository.deleteWorld(id: worldId)
+            worlds.removeAll { $0.id == worldId }
+            // もし消したいワールドがお気に入りなら
+            if favoriteWorldId == worldId {
+                try? await userRepository.updateFavoriteWorld(userId: userId, worldId: nil)
+                favoriteWorldId = nil // お気に入りを画面から消す
+            }
+            return true
+        } catch {
+            errorMessage = "ワールドが削除できませんでした。通信状態を確かめて、もう一度試してください。"
             return false
         }
     }

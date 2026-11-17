@@ -8,6 +8,8 @@ struct WorldDetailView: View {
     let worldId: String  // 表示するワールドの ID
     let viewModel: WorldListViewModel  // お気に入り・名前の変更に使う（一覧と同じものを受け取る）
     @State private var isShowingRename = false  // 名前を変える画面を出しているか
+    @State private var isShowingDeleteDialog = false  // 削除の確認を出しているか
+    @Environment(\.dismiss) private var dismiss  // 削除できたら、一覧に戻るのに使う
     @State private var didCopySeed = false  // シード値をコピーしたか（アイコンを切りかえる）
 
     // 表の1行
@@ -115,6 +117,7 @@ struct WorldDetailView: View {
             }
         }
         .appHeader("ワールドの情報")
+        .onAppear { viewModel.errorMessage = nil }  // 前の画面のエラーを消す
     }
 
     private func content(_ world: World) -> some View {
@@ -148,7 +151,7 @@ struct WorldDetailView: View {
                     sectionCard(section)
                 }
 
-                bottomButtons
+                bottomButtons(world)
             }
             .padding(16)
         }
@@ -230,8 +233,8 @@ struct WorldDetailView: View {
         .padding(.vertical, 10)
     }
 
-    // 下のボタン（6-7 で動かす。いまはレイアウトを見るために置いてある）
-    private var bottomButtons: some View {
+    // 下のボタン（更新は 6-7 の続きで動かす。いまはレイアウトを見るために置いてある）
+    private func bottomButtons(_ world: World) -> some View {
         VStack(spacing: 10) {
             Button {
                 // TODO(6-7): level.dat を選びなおして更新する
@@ -241,16 +244,42 @@ struct WorldDetailView: View {
             }
             .buttonStyle(.secondary)
 
+            // 削除に失敗したときの文
+            if let message = viewModel.errorMessage {
+                Text(message)
+                    .font(.footnote)
+                    .foregroundStyle(Color.appErrorText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             Button(role: .destructive) {
-                // TODO(6-7): このワールドを削除する
+                isShowingDeleteDialog = true  // すぐには消さず、確認を出す
             } label: {
                 Text("このワールドを削除")
                     .font(.subheadline.weight(.medium))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
             }
+            .disabled(viewModel.isDeleting)
         }
         .padding(.top, 8)
+        // 確認（「削除する」を押したときだけ、消す）
+        .confirmationDialog(
+            "「\(world.displayName)」を削除しますか？",
+            isPresented: $isShowingDeleteDialog,
+            titleVisibility: .visible
+        ) {
+            Button("削除する", role: .destructive) {
+                Task {
+                    if await viewModel.deleteWorld(userId: user.id, worldId: world.id) {
+                        dismiss()  // 消せたら、一覧に戻る
+                    }
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("アプリの一覧から消えます。元には戻せません。マイクラのワールド本体は消えません。")
+        }
     }
 
     // 白いカードの枠
