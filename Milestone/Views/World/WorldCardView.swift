@@ -33,7 +33,7 @@ struct WorldCardView: View {
             )
 
             if isOpen {
-                WorldSubBannerView(world: world, ownerName: ownerName)
+                WorldSubBannerView(world: world, ownerName: ownerName, showsDetails: false)
                 Divider().padding(.horizontal, 14)
             }
 
