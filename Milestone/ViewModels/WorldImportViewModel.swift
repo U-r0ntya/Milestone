@@ -5,11 +5,8 @@ import Observation
 @Observable
 @MainActor
 final class WorldImportViewModel {
-    // 画面が見る値（上の表の 5 つ）
     // 読みこめたワールド。まだなら nil
     var world: World? = nil
-    // 読みこみ中か
-    var isLoading: Bool = false
     // 登録中か
     var isSaving: Bool = false
     // 失敗したときに出す文

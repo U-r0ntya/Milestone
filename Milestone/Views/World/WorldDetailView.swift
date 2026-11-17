@@ -240,7 +240,7 @@ struct WorldDetailView: View {
         .padding(.vertical, 10)
     }
 
-    // 下のボタン（更新は 6-7 の続きで動かす。いまはレイアウトを見るために置いてある）
+    // 下のボタン：level.dat を読みなおして更新（ブックマークで読み、だめなら選びなおす）、ワールドの削除
     private func bottomButtons(_ world: World) -> some View {
         VStack(spacing: 10) {
             Button {
