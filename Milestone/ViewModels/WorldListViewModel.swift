@@ -12,7 +12,8 @@ final class WorldListViewModel {
     var favoriteWorldId: String?  // お気に入りのワールドの ID（ログイン中の人の User から受け取り、星を押すと Firestore に保存する）
     var isSavingFavorite = false  // お気に入りを保存中か（連打を防ぐ）
     var isRenaming = false  // 名前を保存中か（連打を防ぐ）
-    var isDeleting = false // ワールド削除中か
+    var isDeleting = false  // ワールド削除中か
+    var isUpdating = false  // ワールド更新中か
 
     // ワールドを読み書きする係
     private let repository: WorldRepository
@@ -55,7 +56,6 @@ final class WorldListViewModel {
     }
 
     // 並べ方に使う日時（最後に遊んだ日時。level.dat に入っていなかったときは登録した日時）
-    // 6-4 で、情報の画面を開いた日時（端末に覚える）も比べるようにする
     private func playedDate(of world: World) -> Date {
         world.lastPlayed ?? world.createdAt
     }
@@ -138,19 +138,99 @@ final class WorldListViewModel {
         isDeleting = true  // 保存を始めた
         defer { isDeleting = false }  // この関数を抜けるときに、必ず false に戻す
         errorMessage = nil
-        
+
         do {
             try await repository.deleteWorld(id: worldId)
             worlds.removeAll { $0.id == worldId }
+            LevelDatBookmarkStore.remove(for: worldId)
             // もし消したいワールドがお気に入りなら
             if favoriteWorldId == worldId {
-                try? await userRepository.updateFavoriteWorld(userId: userId, worldId: nil)
-                favoriteWorldId = nil // お気に入りを画面から消す
+                try? await userRepository.updateFavoriteWorld(
+                    userId: userId,
+                    worldId: nil
+                )
+                favoriteWorldId = nil  // お気に入りを画面から消す
             }
             return true
         } catch {
             errorMessage = "ワールドが削除できませんでした。通信状態を確かめて、もう一度試してください。"
             return false
         }
+    }
+
+    // ワールドを更新する処理（選んだ level.dat を読みなおして、今のワールドを新しい内容にする）
+    func updateWorld(worldId: String, from url: URL) async -> Bool {
+        guard !isUpdating else { return false }
+        isUpdating = true
+        defer { isUpdating = false }
+        errorMessage = nil
+
+        // 一覧から、更新するワールドの場所を探す
+        guard let index = worlds.firstIndex(where: { $0.id == worldId }) else {
+            errorMessage = "ワールドが見つかりませんでした。"
+            return false
+        }
+        // 更新前のワールド（id や名前など、残すものを取り出すのに使う）
+        let oldWorld = worlds[index]
+
+        // level.dat 以外のファイル（level.dat_old など）は断る
+        guard url.lastPathComponent == "level.dat" else {
+            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
+            return false
+        }
+        // ファイルを読む許可を取る
+        guard url.startAccessingSecurityScopedResource() else {
+            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
+            return false
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+
+        // Data にする → NBTReader で辞書にする → LevelDatParser で新しい World を作る
+        var newWorld: World
+        do {
+            let data = try Data(contentsOf: url)
+            let root = try NBTReader.readLevelDat(data)
+            newWorld = try LevelDatParser.parse(
+                root,
+                ownerId: oldWorld.ownerId,
+                device: oldWorld.device
+            )
+        } catch {
+            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
+            return false
+        }
+
+        // 選んだファイルのフォルダ名が、今のワールドと違えば、別のワールドなので断る
+        // 今のワールドにフォルダ名がないときは、比べられないので、そのまま進む
+        let folderName = url.deletingLastPathComponent().lastPathComponent
+        if let oldFolderName = oldWorld.folderName,
+            oldFolderName != folderName
+        {
+            errorMessage = "別のワールドの level.dat です。"
+            return false
+        }
+
+        // parse が新しく作った値を、今のワールドのものに戻す
+        newWorld.id = oldWorld.id
+        newWorld.createdAt = oldWorld.createdAt
+        newWorld.customName = oldWorld.customName
+        newWorld.folderName = folderName
+
+        // Firestore に保存する
+        do { try await repository.saveWorld(newWorld) } catch {
+            errorMessage = "ワールドを更新できませんでした。通信状態を確かめて、もう一度試してください。"
+            return false
+        }
+
+        // 許可が生きているうちに、ブックマークも保存しなおす
+        LevelDatBookmarkStore.save(url, for: newWorld.id)
+
+        // 通信を待っているあいだに一覧が変わったかもしれないので、場所を探しなおす
+        guard let newIndex = worlds.firstIndex(where: { $0.id == newWorld.id })
+        else {
+            return true  // 一覧からもう消えている → 保存はできているので、成功
+        }
+        worlds[newIndex] = newWorld  // 画面のデータも、新しい内容に入れかえる
+        return true
     }
 }
