@@ -14,6 +14,7 @@ final class WorldListViewModel {
     var isRenaming = false  // 名前を保存中か（連打を防ぐ）
     var isDeleting = false  // ワールド削除中か
     var isUpdating = false  // ワールド更新中か
+    var openedDates: [String: Date] = [:]  // ワールドの情報の画面を開いた日時（ワールドの ID → 日時。端末の中だけに保存）
 
     // ワールドを読み書きする係
     private let repository: WorldRepository
@@ -26,6 +27,7 @@ final class WorldListViewModel {
         self.repository = FirestoreWorldRepository()
         self.userRepository = FirestoreUserRepository()
         self.favoriteWorldId = favoriteWorldId
+        openedDates = WorldOpenedStore.all()
     }
 
     init(
@@ -36,6 +38,7 @@ final class WorldListViewModel {
         self.repository = repository
         self.userRepository = userRepository
         self.favoriteWorldId = favoriteWorldId
+        openedDates = WorldOpenedStore.all()
     }
 
     // 自分のワールドを読みこむ（ownerId はログイン中の人の ID）
@@ -55,9 +58,14 @@ final class WorldListViewModel {
         }
     }
 
-    // 並べ方に使う日時（最後に遊んだ日時。level.dat に入っていなかったときは登録した日時）
+    // 並べ方に使う日時：「マイクラで遊んだ日時」と「アプリで開いた日時」の、新しいほう
     private func playedDate(of world: World) -> Date {
-        world.lastPlayed ?? world.createdAt
+        max(
+            // マイクラで最後に遊んだ日時（level.dat に入っていなかったときは、登録した日時）
+            world.lastPlayed ?? world.createdAt,
+            // アプリで最後に開いた日時（まだ開いていなければ、一番古い日時にして、負けるようにする）
+            openedDates[world.id] ?? .distantPast
+        )
     }
 
     // お気に入りのワールド
@@ -151,6 +159,8 @@ final class WorldListViewModel {
                 )
                 favoriteWorldId = nil  // お気に入りを画面から消す
             }
+            openedDates.removeValue(forKey: worldId)
+            WorldOpenedStore.remove(for: worldId)
             return true
         } catch {
             errorMessage = "ワールドが削除できませんでした。通信状態を確かめて、もう一度試してください。"
@@ -232,5 +242,11 @@ final class WorldListViewModel {
         }
         worlds[newIndex] = newWorld  // 画面のデータも、新しい内容に入れかえる
         return true
+    }
+    
+    func markOpened(worldId:String){
+        // 指定のワールドの日時を今の日時に変更
+        openedDates[worldId] = Date()
+        WorldOpenedStore.record(Date(), for: worldId)
     }
 }
