@@ -16,6 +16,8 @@ final class WorldImportViewModel {
     var errorMessage: String? = nil
     // 登録が終わったか（画面を閉じる合図）
     var isSaved: Bool = false
+    // URLを保管
+    private var pickedURL: URL?
     // すでに登録してあるワールド（一覧から受け取る）
     private let existingWorlds: [World]
 
@@ -62,7 +64,8 @@ final class WorldImportViewModel {
                 device: device
             )
             world.folderName = url.deletingLastPathComponent().lastPathComponent
-            self.world = world
+            self.world = world  // worldを保管
+            pickedURL = url  // URLを保管しておく
         } catch {
             errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"  //  失敗したら
         }
@@ -83,6 +86,10 @@ final class WorldImportViewModel {
         // repository.saveWorld で保存する。成功したら isSaved = true
         do {
             try await repository.saveWorld(world)
+            if let pickedURL, pickedURL.startAccessingSecurityScopedResource() {
+                defer { pickedURL.stopAccessingSecurityScopedResource() }
+                LevelDatBookmarkStore.save(pickedURL, for: world.id)
+            }
             isSaved = true
         } catch {
             errorMessage = "ワールドを保存できませんでした。通信状態を確かめて、もう一度試してください。"
