@@ -80,6 +80,16 @@ final class WorldListViewModel {
             .max { playedDate(of: $0) < playedDate(of: $1) }
     }
 
+    // 最近のワールドが、「アプリで開いた日時」で選ばれたか（true なら「最近閲覧した」、false なら「最近遊んだ」）
+    var isRecentByOpened: Bool {
+        // 最近のワールドと、その開いた日時がなければ（まだ開いていなければ）、遊んだほう
+        guard let recent = recentWorld, let opened = openedDates[recent.id] else {
+            return false
+        }
+        // 開いた日時が、マイクラで遊んだ日時より新しいときだけ true
+        return opened > (recent.lastPlayed ?? recent.createdAt)
+    }
+
     // 残りのワールド（最近遊んだ順）
     var otherWorlds: [World] {
         worlds

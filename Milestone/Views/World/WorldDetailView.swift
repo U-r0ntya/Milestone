@@ -121,7 +121,10 @@ struct WorldDetailView: View {
             }
         }
         .appHeader("ワールドの情報")
-        .onAppear { viewModel.errorMessage = nil }  // 前の画面のエラーを消す
+        .onAppear {
+            viewModel.errorMessage = nil  // 前の画面のエラーを消す
+            viewModel.markOpened(worldId: worldId)  // このワールドを開いた日時を記録する（一覧の並びに使う）
+        }
     }
 
     private func content(_ world: World) -> some View {

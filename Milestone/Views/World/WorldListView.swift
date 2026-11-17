@@ -182,7 +182,11 @@ struct WorldListView: View {
         }
 
         if let recent = viewModel.recentWorld {
-            sectionHeader("最近遊んだワールド", systemImage: "clock")
+            // 開いた日時で選ばれたときは「閲覧した」、遊んだ日時で選ばれたときは「遊んだ」
+            sectionHeader(
+                viewModel.isRecentByOpened ? "最近閲覧したワールド" : "最近遊んだワールド",
+                systemImage: viewModel.isRecentByOpened ? "eye" : "clock"
+            )
             card(recent, startsOpen: true)
         }
 
