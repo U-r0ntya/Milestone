@@ -14,6 +14,8 @@ final class WorldListViewModel {
     var isRenaming = false  // 名前を保存中か（連打を防ぐ）
     var isDeleting = false  // ワールド削除中か
     var isUpdating = false  // ワールド更新中か
+    var isUpdatingAll = false  // 全体の更新中か
+    var updateAllMessage: String?  // 結果の文
     var openedDates: [String: Date] = [:]  // ワールドの情報の画面を開いた日時（ワールドの ID → 日時。端末の中だけに保存）
 
     // ワールドを読み書きする係
@@ -83,7 +85,8 @@ final class WorldListViewModel {
     // 最近のワールドが、「アプリで開いた日時」で選ばれたか（true なら「最近閲覧した」、false なら「最近遊んだ」）
     var isRecentByOpened: Bool {
         // 最近のワールドと、その開いた日時がなければ（まだ開いていなければ）、遊んだほう
-        guard let recent = recentWorld, let opened = openedDates[recent.id] else {
+        guard let recent = recentWorld, let opened = openedDates[recent.id]
+        else {
             return false
         }
         // 開いた日時が、マイクラで遊んだ日時より新しいときだけ true
@@ -253,8 +256,47 @@ final class WorldListViewModel {
         worlds[newIndex] = newWorld  // 画面のデータも、新しい内容に入れかえる
         return true
     }
-    
-    func markOpened(worldId:String){
+
+    // 全部のワールドを、ブックマークから level.dat を読みなおして更新する
+    // ブックマークがないワールドは、選ぶ画面を出さずに飛ばす（何件もあると、選ぶ画面が続けて出てしまうため）
+    func updateAllWorlds() async {
+        guard !isUpdatingAll else { return }  // 更新中にもう一度呼ばれたら何もしない
+        isUpdatingAll = true  // 更新を始めた
+        defer { isUpdatingAll = false }  // この関数を抜けるときに、必ず false に戻す
+        updateAllMessage = nil
+
+        // 全部のワールドの ID を、配列に取り出す（updateWorld が途中で worlds を書きかえるため、先に取り出す）
+        let ids = worlds.map { $0.id }
+        var updatedCount = 0  // 更新できた数
+        var failedCount = 0  // 読めなかった・保存できなかった数
+        var noBookmarkCount = 0  // ブックマークがない数
+
+        for id in ids {
+            if let url = LevelDatBookmarkStore.resolve(for: id) {
+                if await updateWorld(worldId: id, from: url) {
+                    updatedCount += 1
+                } else {
+                    failedCount += 1
+                }
+            } else {
+                noBookmarkCount += 1
+            }
+        }
+        // updateWorld が失敗したときの文が残っているので消す（結果は updateAllMessage で出す）
+        errorMessage = nil
+
+        // 結果の文を作る（0 件のものは出さない）
+        var message = "\(updatedCount) 件を更新しました。"
+        if failedCount > 0 {
+            message += "\(failedCount) 件は読めませんでした。"
+        }
+        if noBookmarkCount > 0 {
+            message += "\(noBookmarkCount) 件は、ワールドの情報の画面から level.dat を選んでください。"
+        }
+        updateAllMessage = message
+    }
+
+    func markOpened(worldId: String) {
         // 指定のワールドの日時を今の日時に変更
         openedDates[worldId] = Date()
         WorldOpenedStore.record(Date(), for: worldId)

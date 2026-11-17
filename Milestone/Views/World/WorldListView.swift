@@ -50,6 +50,23 @@ struct WorldListView: View {
             }
             .padding(16)
         }
+        // 上の帯の右：全部のワールドを、level.dat を読みなおして更新する
+        .toolbar {
+            if canImport, !viewModel.worlds.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if viewModel.isUpdatingAll {
+                        ProgressView()  // 更新中は、ぐるぐるを出す
+                    } else {
+                        Button {
+                            Task { await viewModel.updateAllWorlds() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .accessibilityLabel("全部のワールドを更新")
+                    }
+                }
+            }
+        }
         // 「ワールドを登録」を押すと、登録の画面が下から出る
         .sheet(isPresented: $isShowingImport) {
             // 今あるワールドも渡す（同じワールドを2回登録しないため）
@@ -168,6 +185,35 @@ struct WorldListView: View {
     // お気に入り → 最近遊んだワールド → 残り（残りには見出しを付けない）
     @ViewBuilder
     private var worldSections: some View {
+        // 全体の更新の結果（× で消せる）
+        if let message = viewModel.updateAllMessage {
+            // 文字の 1 行目の線（ベースライン）にそろえる。アイコンも文字と同じ大きさにする
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.footnote.bold())
+                    .foregroundStyle(Color.appTagText)
+                Text(message)
+                    .font(.footnote)
+                    .foregroundStyle(Color.appTextPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button {
+                    viewModel.updateAllMessage = nil
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.footnote.bold())
+                        .foregroundStyle(Color.appTextSecondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("とじる")
+            }
+            .padding(12)
+            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.appCardBorder, lineWidth: 1)
+            )
+        }
+
         // 引っ張って更新に失敗したときは、前のワールドを残して上にエラーを出す
         if let errorMessage = viewModel.errorMessage {
             Text(errorMessage)
@@ -238,7 +284,7 @@ struct WorldListView: View {
                 id: "preview",
                 name: "たいき",
                 iconURL: nil,
-                device: .nintendoSwitch,
+                device: .iPad,
                 bio: nil
             ),
             repository: MockWorldRepository(),
