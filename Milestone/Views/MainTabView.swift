@@ -24,8 +24,7 @@ struct MainTabView: View {
 
             // ワールド
             NavigationStack {
-                WorldListView(user: user)
-                    .appHeader("ワールド")
+                WorldListView(user: user)  // 上のバーと背景は、WorldListView の中で付ける（空の背景）
             }
             .tabItem {
                 Label("ワールド", systemImage: "cube")

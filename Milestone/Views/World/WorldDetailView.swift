@@ -2,110 +2,23 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-// ワールドの情報の画面：大看板・名前を変える・ランク・全部の情報・下のボタン
-// 一覧のカードを押すと、ここに進む。レイアウトを見るための土台（ボタンはまだ動かない。シード値のコピーだけ動く）
+// ワールドの情報の画面（天気アプリ風）
+// 背景：ブロックでできた空と地面の下（スクロールに合わせて動く。昼・夜はダークモードで切りかわる）
+// 上から：ワールド名と日数 → ランク → マップ → 2 列のタイル → シード値 → ルール → くわしい情報 → ボタン
+// 一覧のカードを押すと、ここに進む
 struct WorldDetailView: View {
     let user: User  // ログイン中の人
     let worldId: String  // 表示するワールドの ID
-    let viewModel: WorldListViewModel  // お気に入り・名前の変更に使う（一覧と同じものを受け取る）
+    let viewModel: WorldListViewModel  // お気に入り・名前の変更・更新・削除に使う（一覧と同じものを受け取る）
     @State private var isShowingRename = false  // 名前を変える画面を出しているか
     @State private var isShowingDeleteDialog = false  // 削除の確認を出しているか
     @State private var isShowingFilePicker = false  // 「ファイル」アプリの選ぶ画面を出しているか
     @State private var didUpdate = false  // 更新できたか（「更新しました」を出す）
     @State private var showsPickFallback = false  // 「ファイルを選びなおす」を出すか（ブックマークで失敗したとき）
-    @Environment(\.dismiss) private var dismiss  // 削除できたら、一覧に戻るのに使う
     @State private var didCopySeed = false  // シード値をコピーしたか（アイコンを切りかえる）
-
-    // 表の1行
-    private struct Row: Identifiable {
-        let label: String
-        let value: String
-        var copyText: String? = nil  // 入っていれば、右にコピーのボタンを出す
-        var id: String { label }
-    }
-
-    // 表の1つのまとまり（SwiftUI の Section と名前が重ならないように InfoGroup）
-    private struct InfoGroup: Identifiable {
-        let title: String
-        let rows: [Row]
-        var id: String { title }
-    }
-
-    // 入っているデータは、全部出す（Optional の項目は、値がなければ行を出さない）
-    private func sections(for world: World) -> [InfoGroup] {
-        // ワールド
-        var worldRows: [Row] = [
-            Row(label: "ゲームモード", value: world.gameMode.displayName)
-        ]
-        if let difficulty = world.difficulty {
-            worldRows.append(Row(label: "難易度", value: difficulty.displayName))
-        }
-        if let time = world.time {
-            worldRows.append(Row(label: "ワールドの日数", value: "\(time / 24000)日目"))
-        }
-        if let worldType = world.worldType {
-            worldRows.append(Row(label: "ワールドの種類", value: worldType.displayName))
-        }
-        if let seed = world.seed {
-            worldRows.append(Row(label: "シード値", value: "\(seed)", copyText: "\(seed)"))
-        }
-        if let spawn = world.spawnPoint {
-            worldRows.append(
-                Row(label: "スポーン地点", value: "\(spawn.x) / \(spawn.y) / \(spawn.z)")
-            )
-        }
-
-        // 設定
-        var settingRows: [Row] = [
-            Row(label: "チート", value: world.commandsEnabled ? "ON" : "OFF"),
-            Row(label: "マルチプレイ", value: world.isMultiplayer ? "ON" : "OFF"),
-        ]
-        if let used = world.hasUsedCheats {
-            settingRows.append(
-                Row(label: "クリエイティブ・チートの使用", value: used ? "使った" : "使っていない")
-            )
-        }
-        if let required = world.texturePacksRequired {
-            settingRows.append(
-                Row(label: "リソースパックが必須か", value: required ? "必須" : "必須ではない")
-            )
-        }
-        if let permission = world.playerPermission {
-            settingRows.append(Row(label: "自分の権限", value: permission.displayName))
-        }
-
-        // 記録
-        var recordRows: [Row] = []
-        if let version = world.lastOpenedVersion {
-            recordRows.append(Row(label: "最後に開いたバージョン", value: version))
-        }
-        if let lastPlayed = world.lastPlayed {
-            recordRows.append(Row(label: "最後に遊んだ日時", value: dateText(lastPlayed)))
-        }
-        recordRows.append(Row(label: "登録した日時", value: dateText(world.createdAt)))
-        recordRows.append(Row(label: "機種", value: world.device.displayName))
-        recordRows.append(Row(label: "持ち主", value: user.name))
-        if world.customName != nil {
-            recordRows.append(Row(label: "level.dat の名前", value: world.name))
-        }
-        if let folderName = world.folderName {
-            recordRows.append(Row(label: "フォルダ名", value: folderName))
-        }
-
-        return [
-            InfoGroup(title: "ワールド", rows: worldRows),
-            InfoGroup(title: "設定", rows: settingRows),
-            InfoGroup(title: "記録", rows: recordRows),
-        ]
-    }
-
-    // 日時を「2026年11月15日 17:40」の形にする（日本語で出すために、ロケールを指定する）
-    private func dateText(_ date: Date) -> String {
-        date.formatted(
-            Date.FormatStyle(date: .long, time: .shortened)
-                .locale(Locale(identifier: "ja_JP"))
-        )
-    }
+    @State private var scrollOffset: CGFloat = 0  // 下に何ポイントスクロールしたか（背景を動かすのに使う）
+    @Environment(\.dismiss) private var dismiss  // 削除できたら、一覧に戻るのに使う
+    @Environment(\.colorScheme) private var colorScheme  // ダークモードなら、背景を夜にする
 
     // 一覧のデータから、ID が同じワールドを探す（名前を変えると、ここも新しくなる）
     private var world: World? {
@@ -118,179 +31,121 @@ struct WorldDetailView: View {
                 content(world)
             } else {
                 ContentUnavailableView("ワールドが見つかりません", systemImage: "cube")
+                    .appHeader("ワールドの情報")
             }
         }
-        .appHeader("ワールドの情報")
         .onAppear {
             viewModel.errorMessage = nil  // 前の画面のエラーを消す
             viewModel.markOpened(worldId: worldId)  // このワールドを開いた日時を記録する（一覧の並びに使う）
         }
     }
 
+    // 上のバーにワールド名を出すか（タイトルのワールド名が、スクロールで上に隠れたら出す）
+    private var showsBarTitle: Bool {
+        scrollOffset > 48  // タイトルの上の余白（8）＋ ワールド名の 1 行（約 40）
+    }
+
+    // ランク（サバイバルで、日数（time）があるときだけ）
+    private func rank(for world: World) -> WorldRank? {
+        guard world.gameMode == .survival, world.time != nil else { return nil }
+        return WorldRank(world: world)
+    }
+
     private func content(_ world: World) -> some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // 大看板（星でお気に入りを切りかえる）
-                WorldBannerView(
-                    world: world,
-                    isFavorite: viewModel.favoriteWorldId == world.id,
-                    onToggleFavorite: {
-                        Task {
-                            await viewModel.toggleFavorite(
-                                userId: user.id,
-                                worldId: world.id
-                            )
-                        }
+        GeometryReader { proxy in
+            let scale = proxy.size.width / 390  // デザイン（幅 390）の 1 が、画面の何ポイントか
+            // 地面の下（デザインの y = 460）が、スクロールの中のどこにあるか。カードはそこから始める
+            let groundY = 460 * scale - proxy.safeAreaInsets.top
+
+            ScrollView {
+                VStack(spacing: 12) {
+                    WorldDetailHeader(world: world, rank: rank(for: world))
+                        .padding(.top, 8)
+                        .frame(minHeight: max(groundY - 12, 0), alignment: .top)
+
+                    if let rank = rank(for: world) {
+                        WorldRankCard(rank: rank)
                     }
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 16))
 
-                renameRow
+                    WorldMapCard(days: world.days)
 
-                // ランク（サバイバルで、日数（time）があるときだけ）
-                if world.gameMode == .survival, world.time != nil {
-                    card {
-                        WorldRankView(rank: WorldRank(world: world))
+                    tiles(world)
+
+                    if let seed = world.seed {
+                        seedCard(seed)
                     }
-                }
 
-                ForEach(sections(for: world)) { section in
-                    sectionCard(section)
-                }
+                    rulesCard(world)
 
-                bottomButtons(world)
+                    detailsCard(world)
+
+                    bottomButtons(world)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 32)
             }
-            .padding(16)
+            // スクロールした量を受け取る（いちばん上で 0、下にスクロールするとプラス）
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, newValue in
+                scrollOffset = newValue
+            }
+            .background {
+                WorldDetailBackground(
+                    palette: colorScheme == .dark ? .night : .day,
+                    scrollOffset: scrollOffset
+                )
+                .ignoresSafeArea()
+            }
+        }
+        // カードの見出しを上にくっつけるときの基準（バーの下が y = 0）
+        .coordinateSpace(.worldDetail)
+        // 上のバー：戻るボタン（いつもの）と、お気に入り・更新のボタン
+        // ふだんはバーの色を付けず、スクロールしてワールド名が見えなくなったら、バーとワールド名を出す
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackgroundVisibility(showsBarTitle ? .visible : .hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .animation(.easeInOut(duration: 0.2), value: showsBarTitle)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                // ワールド名と、その下にランク（ランクがあるときだけ）
+                VStack(spacing: 0) {
+                    Text(world.displayName)
+                        .font(.headline)
+                    if let rank = rank(for: world) {
+                        Text(rank.title)
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                }
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .opacity(showsBarTitle ? 1 : 0)
+                .accessibilityElement(children: .combine)
+                .accessibilityHidden(!showsBarTitle)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                favoriteButton(world)
+            }
+            ToolbarSpacer(.fixed, placement: .topBarTrailing)
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task { await reloadFromBookmark() }
+                } label: {
+                    if viewModel.isUpdating {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                }
+                .disabled(viewModel.isUpdating)
+                .accessibilityLabel("level.dat から更新する")
+            }
         }
         // 名前を変える画面（下から出る）
         .sheet(isPresented: $isShowingRename) {
             WorldRenameView(world: world, viewModel: viewModel)
         }
-    }
-
-    // 「名前を変える」の行（押すと、入力の小さな画面を出す。まだ動かない）
-    private var renameRow: some View {
-        Button {
-            isShowingRename = true
-        } label: {
-            HStack {
-                Label("ワールド名を変える", systemImage: "pencil")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.appTextPrimary)
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.bold())
-                    .foregroundStyle(Color.appTextSecondary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.appCardBorder, lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    // 表の1つのまとまり（見出し＋行）
-    private func sectionCard(_ section: InfoGroup) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(section.title)
-                .font(.subheadline.bold())
-                .foregroundStyle(Color.appTextSecondary)
-                .padding(.leading, 4)
-
-            card {
-                VStack(spacing: 0) {
-                    ForEach(Array(section.rows.enumerated()), id: \.element.id) { index, row in
-                        if index > 0 { Divider() }
-                        rowView(row)
-                    }
-                }
-            }
-        }
-    }
-
-    // 1行：左に項目名、右に値（コピーできる項目は、いちばん右にアイコン）
-    private func rowView(_ row: Row) -> some View {
-        HStack(spacing: 8) {
-            Text(row.label)
-                .font(.footnote)
-                .foregroundStyle(Color.appTextSecondary)
-            Spacer(minLength: 8)
-            Text(row.value)
-                .font(.footnote.weight(.medium))
-                .foregroundStyle(Color.appTextPrimary)
-                .multilineTextAlignment(.trailing)
-            if let copyText = row.copyText {
-                Button {
-                    UIPasteboard.general.string = copyText
-                    didCopySeed = true
-                } label: {
-                    Image(systemName: didCopySeed ? "checkmark" : "doc.on.doc")
-                        .font(.footnote)
-                        .foregroundStyle(Color.appTagText)
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("シード値をコピー")
-            }
-        }
-        .padding(.vertical, 10)
-    }
-
-    // 下のボタン（更新は 6-7 の続きで動かす。いまはレイアウトを見るために置いてある）
-    private func bottomButtons(_ world: World) -> some View {
-        VStack(spacing: 10) {
-            Button {
-                Task { await reloadFromBookmark() }
-            } label: {
-                Text(viewModel.isUpdating ? "更新中…" : "level.dat を読みなおして更新")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.secondary)
-            .disabled(viewModel.isUpdating)
-
-            // ブックマークで更新できなかったときは、ファイルを選びなおせるようにする
-            if showsPickFallback {
-                Button {
-                    isShowingFilePicker = true
-                } label: {
-                    Text("ファイルを選びなおす")
-                        .font(.subheadline.weight(.medium))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                }
-                .disabled(viewModel.isUpdating)
-            }
-
-            if didUpdate {
-                Text("更新しました")
-                    .font(.footnote)
-                    .foregroundStyle(Color.appTextSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            // 削除に失敗したときの文
-            if let message = viewModel.errorMessage {
-                Text(message)
-                    .font(.footnote)
-                    .foregroundStyle(Color.appErrorText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            Button(role: .destructive) {
-                isShowingDeleteDialog = true  // すぐには消さず、確認を出す
-            } label: {
-                Text("このワールドを削除")
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-            }
-            .disabled(viewModel.isDeleting)
-        }
-        .padding(.top, 8)
         // 「ファイル」アプリで level.dat を選ぶ（選んだら、そのファイルで更新する）
         .fileImporter(
             isPresented: $isShowingFilePicker,
@@ -299,23 +154,301 @@ struct WorldDetailView: View {
             guard case .success(let url) = result else { return }
             Task { await update(from: url) }
         }
-        // 確認（「削除する」を押したときだけ、消す。まわりを押せば、とじる）
-        .confirmationDialog(
-            "「\(world.displayName)」を削除しますか？",
-            isPresented: $isShowingDeleteDialog,
-            titleVisibility: .visible
-        ) {
-            Button("削除する", role: .destructive) {
-                Task {
-                    if await viewModel.deleteWorld(userId: user.id, worldId: world.id) {
-                        dismiss()  // 消せたら、一覧に戻る
-                    }
-                }
+    }
+
+    // お気に入りの星（押すと切りかえる）
+    private func favoriteButton(_ world: World) -> some View {
+        let isFavorite = viewModel.favoriteWorldId == world.id
+        return Button {
+            Task {
+                await viewModel.toggleFavorite(userId: user.id, worldId: world.id)
             }
-        } message: {
-            Text("アプリの一覧から消えます。元には戻せません。マイクラのワールド本体は消えません。")
+        } label: {
+            Image(systemName: isFavorite ? "star.fill" : "star")
+        }
+        .accessibilityLabel(isFavorite ? "お気に入りから外す" : "お気に入りにする")
+    }
+
+    // MARK: - 2 列のタイル
+
+    private func tiles(_ world: World) -> some View {
+        LazyVGrid(
+            columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+            spacing: 12
+        ) {
+            // ゲームモード（サバイバルは「〇〇日目を突破」）
+            WorldInfoTile(
+                title: "ゲームモード",
+                systemImage: "gamecontroller",
+                value: world.gameMode.displayName,
+                note: world.gameMode == .survival
+                    ? world.passedMilestone.map { "\($0)日目を突破" } : nil
+            )
+
+            // 難易度（敵の攻撃力の目安。ピースフルは、モンスターが出ないこと）
+            if let difficulty = world.difficulty {
+                WorldInfoTile(
+                    title: "難易度",
+                    systemImage: "chart.bar",
+                    value: difficulty.displayName,
+                    emphasis: difficulty.zombieDamageText,
+                    note: difficulty.attackRatioText,
+                    noteSize: 12
+                )
+            }
+
+            // 最後に遊んだ（何時間前か。下に登録した日）
+            if let lastPlayed = world.lastPlayed {
+                WorldInfoTile(
+                    title: "最後に遊んだ",
+                    systemImage: "clock",
+                    value: lastPlayed.formatted(
+                        .relative(presentation: .named).locale(Locale(identifier: "ja_JP"))
+                    ),
+                    note: "最終登録:\(dayText(world.createdAt))"
+                )
+            }
+
+            // スポーン地点（X・Z を 1 行ずつ）
+            if let spawn = world.spawnPoint {
+                WorldInfoTile(
+                    title: "スポーン地点",
+                    systemImage: "mappin.and.ellipse",
+                    value: "X \(spawn.x)\nZ \(spawn.z)",
+                    valueSize: 26,  // ほかのタイルの値と同じ大きさ
+                    note: spawn.directionFromOrigin
+                )
+            }
         }
     }
+
+    // MARK: - シード値・ルール・くわしい情報
+
+    // シード値（右のボタンでコピーできる）
+    private func seedCard(_ seed: Int64) -> some View {
+        WorldStickyCard(
+            title: "シード値",
+            contentPadding: EdgeInsets(top: 0, leading: 16, bottom: 14, trailing: 16)
+        ) {
+            seedRow(seed)
+        }
+    }
+
+    // シード値の数字と、コピーのボタン
+    private func seedRow(_ seed: Int64) -> some View {
+        HStack(spacing: 12) {
+            Text("\(seed)")
+                .font(.system(size: 20, weight: .medium))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                UIPasteboard.general.string = "\(seed)"
+                didCopySeed = true
+            } label: {
+                Image(systemName: didCopySeed ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 18, weight: .semibold))
+                    .frame(width: 44, height: 44)
+                    .background(.white.opacity(0.18), in: Circle())
+                    .overlay { Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1) }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(didCopySeed ? "コピーしました" : "シード値をコピー")
+        }
+    }
+
+    // ルール（ON / OFF）
+    private func rulesCard(_ world: World) -> some View {
+        var rules: [(label: String, isOn: Bool)] = [
+            ("チート", world.commandsEnabled),
+            ("マルチプレイ", world.isMultiplayer),
+        ]
+        if let required = world.texturePacksRequired {
+            rules.append(("リソースパックが必須", required))
+        }
+        if let used = world.hasUsedCheats {
+            rules.append(("クリエイティブ・チートの使用", used))
+        }
+
+        return listCard(title: "ルール") {
+            ForEach(Array(rules.enumerated()), id: \.element.label) { index, rule in
+                HStack {
+                    Text(rule.label)
+                        .font(.system(size: 15))
+                    Spacer(minLength: 8)
+                    Text(rule.isOn ? "ON" : "OFF")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(rule.isOn ? Color(hex: 0x05382A) : .white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 3)
+                        .background(
+                            rule.isOn ? Color(hex: 0x5DCAA5, opacity: 0.9) : .white.opacity(0.22),
+                            in: Capsule()
+                        )
+                }
+                .padding(.vertical, 12)
+                .overlay(alignment: .top) { if index > 0 { line } }
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    // くわしい情報（level.dat から取れた項目だけ出す）
+    private func detailsCard(_ world: World) -> some View {
+        var rows: [(label: String, value: String)] = []
+        if let version = world.lastOpenedVersion {
+            rows.append(("バージョン", version))
+        }
+        if let worldType = world.worldType {
+            rows.append(("ワールドの種類", worldType.displayName))
+        }
+        rows.append(("登録日時", dateTimeText(world.createdAt)))
+        rows.append(("機種", world.device.displayName))
+        rows.append(("持ち主", user.name))
+        if let permission = world.playerPermission {
+            rows.append(("自分の権限", permission.displayName))
+        }
+        if let folderName = world.folderName {
+            rows.append(("フォルダ名", folderName))
+        }
+        if world.customName != nil {
+            rows.append(("level.dat の名前", world.name))
+        }
+
+        return listCard(title: "くわしい情報") {
+            ForEach(Array(rows.enumerated()), id: \.element.label) { index, row in
+                HStack(alignment: .firstTextBaseline, spacing: 16) {
+                    Text(row.label)
+                        .foregroundStyle(.white.opacity(0.75))
+                        .fixedSize()
+                    Spacer(minLength: 0)
+                    Text(row.value)
+                        .multilineTextAlignment(.trailing)
+                }
+                .font(.system(size: 14))
+                .padding(.vertical, 12)
+                .overlay(alignment: .top) { if index > 0 { line } }
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    // 見出しと、線で区切った行のカード（見出しは上にくっつく）
+    private func listCard<Rows: View>(title: String, @ViewBuilder rows: () -> Rows) -> some View {
+        WorldStickyCard(
+            title: title,
+            contentPadding: EdgeInsets(top: 0, leading: 16, bottom: 6, trailing: 16)
+        ) {
+            VStack(alignment: .leading, spacing: 0) {
+                rows()
+            }
+        }
+    }
+
+    // 行と行のあいだの線
+    private var line: some View {
+        Rectangle()
+            .fill(.white.opacity(0.18))
+            .frame(height: 1)
+    }
+
+    // MARK: - 下のボタン
+
+    // 名前を変える・level.dat から更新する（ブックマークで読み、だめなら選びなおす）・ワールドの削除
+    private func bottomButtons(_ world: World) -> some View {
+        VStack(spacing: 10) {
+            Button("名前を変える") {
+                isShowingRename = true
+            }
+            .buttonStyle(.worldGlass)
+
+            Button(viewModel.isUpdating ? "更新中…" : "level.dat から更新する") {
+                Task { await reloadFromBookmark() }
+            }
+            .buttonStyle(.worldGlass)
+            .disabled(viewModel.isUpdating)
+
+            // ブックマークで更新できなかったときは、ファイルを選びなおせるようにする
+            if showsPickFallback {
+                Button("ファイルを選びなおす") {
+                    isShowingFilePicker = true
+                }
+                .buttonStyle(.worldGlass)
+                .disabled(viewModel.isUpdating)
+            }
+
+            if didUpdate {
+                statusText("更新しました", color: .white)
+            }
+
+            // 更新・削除に失敗したときの文
+            if let message = viewModel.errorMessage {
+                statusText(message, color: Color(hex: 0xFFD9D5))
+            }
+
+            Button("このワールドを削除") {
+                isShowingDeleteDialog = true  // すぐには消さず、確認を出す
+            }
+            .buttonStyle(.worldGlassDestructive)
+            .disabled(viewModel.isDeleting)
+            // 確認（ボタンの近くに出る。「削除する」を押したときだけ消す。まわりを押せば、とじる）
+            .confirmationDialog(
+                "「\(world.displayName)」を削除しますか？",
+                isPresented: $isShowingDeleteDialog,
+                titleVisibility: .visible
+            ) {
+                Button("削除する", role: .destructive) {
+                    Task {
+                        if await viewModel.deleteWorld(userId: user.id, worldId: world.id) {
+                            dismiss()  // 消せたら、一覧に戻る
+                        }
+                    }
+                }
+            } message: {
+                Text("アプリの一覧から消えます。元には戻せません。マイクラのワールド本体は消えません。")
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    // ボタンの近くに出す、短いお知らせの文（暗い背景で読めるように、うすい影を付ける）
+    private func statusText(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundStyle(color)
+            .shadow(color: .black.opacity(0.4), radius: 3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 4)
+    }
+
+    // MARK: - 日時の形
+
+    // 「2026/11/07」の形
+    private func dayText(_ date: Date) -> String {
+        date.formatted(
+            .verbatim(
+                "\(year: .defaultDigits)/\(month: .twoDigits)/\(day: .twoDigits)",
+                timeZone: .current,
+                calendar: Calendar(identifier: .gregorian)
+            )
+        )
+    }
+
+    // 「2026/11/07 12:58」の形
+    private func dateTimeText(_ date: Date) -> String {
+        date.formatted(
+            .verbatim(
+                "\(year: .defaultDigits)/\(month: .twoDigits)/\(day: .twoDigits) \(hour: .twoDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .twoDigits)",
+                timeZone: .current,
+                calendar: Calendar(identifier: .gregorian)
+            )
+        )
+    }
+
+    // MARK: - 更新
 
     // ブックマークから、前に選んだ level.dat を読んで更新する（ブックマークがなければ、選ぶ画面を出す）
     private func reloadFromBookmark() async {
@@ -337,19 +470,6 @@ struct WorldDetailView: View {
         didUpdate = isUpdated
         showsPickFallback = !isUpdated
     }
-
-    // 白いカードの枠
-    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.appCardBorder, lineWidth: 1)
-            )
-    }
 }
 
 #Preview {
@@ -369,10 +489,10 @@ struct WorldDetailView: View {
             seed: -1_234_567_890_123,
             gameMode: .survival,
             difficulty: .normal,
-            spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
+            spawnPoint: BlockPosition(x: 128, z: -64),
             lastOpenedVersion: "1.21.40",
             lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),
-            time: 240_000_000,
+            time: 120 * 24000,  // 120 日目
             worldType: .infinite,
             commandsEnabled: false,
             hasUsedCheats: false,

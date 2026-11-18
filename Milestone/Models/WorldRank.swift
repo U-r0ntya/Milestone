@@ -49,6 +49,8 @@ struct WorldRank {
     let level: Int?  // ネザライトの Lv.（ネザライト以外は nil）
     let progress: Double  // 次のランク（ネザライトは次の Lv.）までの割合（0〜1）
     let daysToNext: Int  // 次のランク（ネザライトは次の Lv.）まで、あと何日
+    let startPoints: Int  // 今のランク（ネザライトは今の Lv.）になった点
+    let goalPoints: Int  // 次のランク（ネザライトは次の Lv.）になる点
 
     init(world: World) {
         // 日数（time は 24000 で 1 日。level.dat に入っていなかったときは 0 日）
@@ -74,12 +76,12 @@ struct WorldRank {
             ?? .wood
 
         // 次のランク（ネザライトは次の Lv.）の点と、次までの割合
-        let nextPoints: Int  // 次のランク（ネザライトは次の Lv.）になる点
         if tier == .netherite {
             // ネザライトの Lv.：365 点で Lv.1、そこから 365 点ごとに 1 つ上がる（切り捨て）
             let currentLevel = 1 + (points - 365) / 365
             level = currentLevel
-            nextPoints = 365 + currentLevel * 365  // 次の Lv. になる点
+            startPoints = currentLevel * 365  // 今の Lv. になった点
+            goalPoints = startPoints + 365  // 次の Lv. になる点
 
             // 割合：今の Lv. に入ってから進んだ点 ÷ 1 つの Lv. の幅（365）
             let progressPoints = (points - 365) % 365  // 今の Lv. に入ってから進んだ点
@@ -88,7 +90,8 @@ struct WorldRank {
             level = nil  // ネザライト以外は Lv. なし
             let index = Tier.allCases.firstIndex(of: tier)!  // 今のランクが何番目か（ネザライト以外なら必ず見つかる）
             let nextTier = Tier.allCases[index + 1]  // その次のランク
-            nextPoints = nextTier.requiredPoints
+            startPoints = tier.requiredPoints
+            goalPoints = nextTier.requiredPoints
 
             // 割合：今のランクに入ってから進んだ点 ÷ ランクの幅
             let gained = Double(points - tier.requiredPoints)  // 今のランクに入ってから進んだ点
@@ -98,7 +101,39 @@ struct WorldRank {
 
         // 次まであと何日（点の差ではなく、日数で数える）
         // 次の点に届く日数（次の点 ÷ 倍率、切り上げ）から、今の日数を引く
-        let daysToReachNext = Int((Double(nextPoints) / multiplier).rounded(.up))
-        daysToNext = daysToReachNext - Int(days)
+        daysToNext = Int((Double(goalPoints) / multiplier).rounded(.up)) - Int(days)
+    }
+
+    // その点に届く日数（点 ÷ 倍率、切り上げ）。ランクのバーの両はしに出す
+    func days(toReach points: Int) -> Int {
+        Int((Double(points) / multiplier).rounded(.up))
+    }
+
+    // ランク名（ネザライトは Lv. を付ける）
+    var title: String {
+        if let level {
+            "ネザライト Lv.\(level)"
+        } else {
+            "\(tier.displayName)ランク"
+        }
+    }
+
+    // 今のランクの短い名前（バーの左はしに出す）
+    var shortName: String {
+        if let level {
+            "Lv.\(level)"
+        } else {
+            tier.displayName
+        }
+    }
+
+    // 次の目標の名前（ネザライトは次の Lv.、それ以外は次のランク）
+    var nextName: String {
+        if let level {
+            return "Lv.\(level + 1)"
+        }
+        let tiers = Tier.allCases
+        let index = tiers.firstIndex(of: tier)!  // ネザライト以外なら必ず見つかり、次もある
+        return tiers[index + 1].displayName
     }
 }

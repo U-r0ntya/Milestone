@@ -144,19 +144,15 @@ enum LevelDatParser {
     private static func spawnPoint(from root: [String: NBTValue])
         -> BlockPosition?
     {
-        // X・Y・Z の3つを取り出す。1つでも取れなければ nil
+        // X・Z の2つを取り出す。どちらかが取れなければ nil
+        // 高さ（SpawnY）は、ほとんどのワールドで「未決定（32767）」のままなので読まない
         guard let x = root["SpawnX"]?.intValue,
-            let y = root["SpawnY"]?.intValue,
             let z = root["SpawnZ"]?.intValue
         else {
             return nil
         }
-        // Y が 32767 のときは「高さがまだ決まっていない」の意味なので nil
-        if y == 32767 {
-            return nil
-        }
         // Int64 を Int に直して、1つの位置にまとめる
-        return BlockPosition(x: Int(x), y: Int(y), z: Int(z))
+        return BlockPosition(x: Int(x), z: Int(z))
     }
 
     // バージョンの文字を作る（数のリスト [1, 26, 52, 3, 0] → "1.26.52"）

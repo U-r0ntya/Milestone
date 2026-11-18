@@ -1,7 +1,7 @@
 import Foundation
 
 // ワールドの情報で使う型。Firestore には英語の名前（rawValue）を文字で保存する
-// level.dat の数字から変える部分は、6-5 で読み込みを作るときに足す
+// level.dat の数字から、これらの型に変える処理は、Services/LevelDatParser.swift にある
 //
 // enum に付けているもの
 // - String：各 case に文字の値（rawValue）を付ける。書かなければ case の名前そのまま（.survival → "survival"）
@@ -77,8 +77,8 @@ enum PermissionLevel: String, Codable, CaseIterable {
 }
 
 // ブロックの位置（スポーン地点など）
+// 高さ（Y）は持たない。統合版の level.dat では、ほとんどのワールドで「未決定（32767）」のままなので使わない
 struct BlockPosition: Codable, Hashable {
     let x: Int
-    let y: Int
     let z: Int
 }
