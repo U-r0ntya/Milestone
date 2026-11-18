@@ -1,6 +1,6 @@
 import SwiftUI
 
-// ワールドの1枚のカード：大看板＋サブ看板（開閉できる）
+// ワールドの1枚のカード：大看板＋サブ看板（開閉できる）。一覧の空の背景に合わせて、すりガラスにする
 // サブ看板は、全部出すか全部隠すかの2通り。とじているときは矢印のボタンだけが残る
 struct WorldCardView: View {
     let world: World
@@ -29,12 +29,16 @@ struct WorldCardView: View {
             WorldBannerView(
                 world: world,
                 isFavorite: isFavorite,
-                onToggleFavorite: onToggleFavorite
+                onToggleFavorite: onToggleFavorite,
+                isGlass: true
             )
 
             if isOpen {
-                WorldSubBannerView(world: world, ownerName: ownerName, showsDetails: false)
-                Divider().padding(.horizontal, 14)
+                WorldSubBannerView(world: world, ownerName: ownerName, showsDetails: false, isGlass: true)
+                Rectangle()
+                    .fill(.white.opacity(0.14))
+                    .frame(height: 1)
+                    .padding(.horizontal, 14)
             }
 
             // 開閉ボタン（矢印だけ）
@@ -49,10 +53,10 @@ struct WorldCardView: View {
                     .contentShape(Rectangle())  // 透明なところも、押せる範囲に入れる
             }
             .buttonStyle(.plain)
-            .foregroundStyle(world.gameMode.accentColor)
+            .foregroundStyle(Color.worldListAccent)
             .accessibilityLabel(isOpen ? "とじる" : "くわしく見る")
         }
-        .background(world.gameMode.tintColor)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .worldListGlass(cornerRadius: 20)
     }
 }

@@ -5,6 +5,13 @@ struct WorldListView: View {
     let user: User  // ログイン中の人
     @State private var viewModel: WorldListViewModel
     @State private var isShowingImport = false  // 登録の画面（シート）を出しているか
+    @Environment(\.colorScheme) private var colorScheme  // ダークモードなら、背景を夜の星空にする
+    @State private var scrollOffset: CGFloat = 0  // 下に何ポイントスクロールしたか
+
+    // 上のバーに「ワールド」を出すか（画面の中の大きいタイトルが、スクロールで上に隠れたら出す）
+    private var showsBarTitle: Bool {
+        scrollOffset > 44  // 大きいタイトルの 1 行ぶん
+    }
 
     // ワールドを登録できる機種か（level.dat を取り出せるのは、iPhone と iPad だけ）
     private var canImport: Bool {
@@ -40,10 +47,9 @@ struct WorldListView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                // 登録できる機種には「ワールドを登録」、できない機種には説明を出す
-                if canImport {
-                    registerCard
-                } else {
+                header
+                // 登録できない機種には説明を出す（登録できる機種は、右上の ＋ から登録する）
+                if !canImport {
                     unsupportedCard
                 }
                 content
@@ -53,8 +59,44 @@ struct WorldListView: View {
             .animation(.snappy, value: viewModel.updateAllMessage)
             .animation(.snappy, value: viewModel.favoriteWorldId)
         }
-        // 上の帯の右：全部のワールドを、level.dat を読みなおして更新する
+        // スクロールした量を受け取る（いちばん上で 0、下にスクロールするとプラス）
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top
+        } action: { _, newValue in
+            scrollOffset = newValue
+        }
+        // 背景：昼は青い空、夜は星空（スクロールしても動かない）
+        .background {
+            WorldListBackground(isNight: colorScheme == .dark)
+                .ignoresSafeArea()
+        }
+        // 上のバー：ふだんは色を付けず空を見せる。スクロールして大きいタイトルが隠れたら、バーと「ワールド」を出す
+        .navigationTitle("ワールド")  // 次の画面の戻るボタンに出る名前
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackgroundVisibility(showsBarTitle ? .visible : .hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .animation(.easeInOut(duration: 0.2), value: showsBarTitle)
         .toolbar {
+            // まん中：小さい「ワールド」（スクロールしたときだけ見える）
+            ToolbarItem(placement: .principal) {
+                Text("ワールド")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .opacity(showsBarTitle ? 1 : 0)
+                    .accessibilityHidden(!showsBarTitle)
+            }
+            // 右：＋（ワールドを登録）と、全部のワールドの更新
+            if canImport {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isShowingImport = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("ワールドを登録")
+                }
+            }
+            // 全部のワールドを、level.dat を読みなおして更新する（ワールドがあるときだけ）
             if canImport, !viewModel.worlds.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -87,39 +129,22 @@ struct WorldListView: View {
         }
     }
 
-    // 「ワールドを登録」のカード（押すと、登録の画面を開く）
-    private var registerCard: some View {
-        Button {
-            isShowingImport = true
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "plus")
-                    .font(.title3.bold())
-                    .foregroundStyle(Color.appTagText)
-                    .frame(width: 40, height: 40)
-                    .background(Color.appTagBackground, in: Circle())
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("ワールドを登録")
-                        .font(.headline)
-                        .foregroundStyle(Color.appTextPrimary)
-                    Text("level.dat を選んで読みこむ")
-                        .font(.caption)
-                        .foregroundStyle(Color.appTextSecondary)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.bold())
-                    .foregroundStyle(Color.appTextSecondary)
+    // 画面の中の大きいタイトル：「ワールド」と、その下にワールドの数
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("ワールド")
+                .font(.system(size: 34, weight: .medium))
+                .accessibilityAddTraits(.isHeader)
+            if !viewModel.worlds.isEmpty {
+                Text("\(viewModel.worlds.count)つのワールド")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.88))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.appCardBorder, lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
+        .foregroundStyle(.white)
+        .shadow(color: .black.opacity(0.25), radius: 6, y: 1)  // 明るい空の上でも読めるように
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 4)
     }
 
     // 登録できない機種に出す説明（Switch・PlayStation・Xbox・Android・Windows など）
@@ -127,31 +152,28 @@ struct WorldListView: View {
         VStack(spacing: 12) {
             Image(systemName: "cube")
                 .font(.title2)
-                .foregroundStyle(Color.appTagText)
-                .frame(width: 56, height: 56)
-                .background(Color.appTagBackground, in: Circle())
+                .foregroundStyle(Color.worldListAccent)
+                .worldListGlassCircle(size: 56)
             Text("ワールドの登録は、iPhone・iPad でマイクラを遊んでいる人だけが使えます")
                 .font(.headline)
-                .foregroundStyle(Color.appTextPrimary)
+                .foregroundStyle(.white)
             Text(
                 "あなたの機種（\(user.device.displayName)）では、ワールドのファイルを取り出せないため、登録できません。"
             )
             .font(.footnote)
-            .foregroundStyle(Color.appTextSecondary)
-            Divider()
+            .foregroundStyle(.white.opacity(0.75))
+            Rectangle()
+                .fill(.white.opacity(0.14))
+                .frame(height: 1)
             Text("投稿には、バージョン・機種・シード値を手で入力して付けられます。")
                 .font(.footnote)
-                .foregroundStyle(Color.appTextSecondary)
+                .foregroundStyle(.white.opacity(0.75))
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 20)
         .padding(.vertical, 28)
-        .background(Color.appCard, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.appCardBorder, lineWidth: 1)
-        )
+        .worldListGlass(cornerRadius: 20)
     }
 
     // ワールドがあるか・読み込み中か・エラーかで、出すものを切り替える
@@ -160,7 +182,9 @@ struct WorldListView: View {
         if !viewModel.worlds.isEmpty {
             worldSections
         } else if viewModel.isLoading {
-            ProgressView().padding(.top, 40)
+            ProgressView()
+                .tint(.white)
+                .padding(.top, 40)
         } else if let errorMessage = viewModel.errorMessage {
             ContentUnavailableView {
                 Label("読み込めませんでした", systemImage: "wifi.exclamationmark")
@@ -172,12 +196,14 @@ struct WorldListView: View {
                 }
                 .buttonStyle(.primary)
             }
+            .foregroundStyle(.white)  // 空の背景の上なので、白い文字にする
         } else if canImport {
             ContentUnavailableView(
                 "まだワールドがありません",
                 systemImage: "cube",
-                description: Text("上の「ワールドを登録」から、最初のワールドを登録してみよう")
+                description: Text("右上の ＋ から、最初のワールドを登録してみよう")
             )
+            .foregroundStyle(.white)
         }
         // 登録できない機種は、上の説明のカードだけを出す
     }
@@ -191,10 +217,10 @@ struct WorldListView: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "arrow.clockwise")
                     .font(.body.bold())
-                    .foregroundStyle(Color.appTagText)
+                    .foregroundStyle(Color.worldListAccent)
                 Text(message)
                     .font(.footnote)
-                    .foregroundStyle(Color.appTextPrimary)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Button {
                     withAnimation(.snappy) {
@@ -203,17 +229,13 @@ struct WorldListView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.footnote.bold())
-                        .foregroundStyle(Color.appTextSecondary)
+                        .foregroundStyle(.white.opacity(0.75))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("とじる")
             }
             .padding(12)
-            .background(Color.appCard, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.appCardBorder, lineWidth: 1)
-            )
+            .worldListGlass(cornerRadius: 16)
             // 出るとき・消えるとき：上から少し動きながら、ふわっと出入りする
             .transition(.move(edge: .top).combined(with: .opacity))
         }
@@ -221,8 +243,8 @@ struct WorldListView: View {
         // 引っ張って更新に失敗したときは、前のワールドを残して上にエラーを出す
         if let errorMessage = viewModel.errorMessage {
             Text(errorMessage)
-                .font(.footnote)
-                .foregroundStyle(Color.appErrorText)
+                .font(.footnote.bold())
+                .foregroundStyle(Color(hex: 0xFFD9D5))  // 空の上でも読める、うすい赤
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
 
@@ -250,7 +272,8 @@ struct WorldListView: View {
     {
         Label(title, systemImage: systemImage)
             .font(.headline)
-            .foregroundStyle(Color.appTextPrimary)
+            .foregroundStyle(.white)
+            .shadow(color: .black.opacity(0.35), radius: 4, y: 1)  // 明るい空の上でも読めるように
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 8)
     }
@@ -294,6 +317,5 @@ struct WorldListView: View {
             repository: MockWorldRepository(),
             userRepository: MockUserRepository()
         )
-        .appHeader("ワールド")
     }
 }
