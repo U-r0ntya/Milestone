@@ -5,28 +5,51 @@ import SwiftUI
 // - 空：y = 0〜460（太陽・雲・星・丘・ゲート・旅人・ほたる）
 // - 地面の下：y = 460〜（洞窟・松明・鍾乳洞。いちばん下の奈落は、どこまでも続く）
 // スクロールに合わせて、絵も上に動かす（scrollOffset）
+// 動くものと動かないものを、別々の Canvas に分けて重ねる。1 秒に 30 回描きなおすのは、動く層だけ
+// （太陽や雲は丘のうしろを通るので、動かない層と動く層を交互に重ねる）
 struct WorldDetailBackground: View {
     let palette: WorldDetailPalette  // 昼か夜かの色
     let scrollOffset: CGFloat  // 下に何ポイントスクロールしたか
     @Environment(\.accessibilityReduceMotion) private var reduceMotion  // 「視差効果を減らす」がオンなら、動きを止める
 
     var body: some View {
-        // 1 秒に 30 回くらい描きなおして、雲やほたるを動かす
-        SwiftUI.TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
-            Canvas { context, size in
-                let scale = size.width / 390  // デザインの 1 が、画面の何ポイントか
-                context.scaleBy(x: scale, y: scale)
-                context.translateBy(x: 0, y: -scrollOffset / scale)
-
-                let painter = WorldBackgroundPainter(
-                    palette: palette,
-                    time: timeline.date.timeIntervalSinceReferenceDate
-                )
-                painter.drawSky(in: context)
-                painter.drawUnderground(in: context)
-            }
+        ZStack {
+            staticLayer { painter, context in painter.drawSkyColor(in: context) }  // 動かない：空の色
+            movingLayer { painter, context in painter.drawBackMotion(in: context) }  // 動く：星・太陽・雲
+            staticLayer { painter, context in painter.drawScenery(in: context) }  // 動かない：丘・ゲートの枠・旅人・地面の下
+            movingLayer { painter, context in painter.drawFrontMotion(in: context) }  // 動く：ゲートのうず・ほたる・松明
         }
         .accessibilityHidden(true)  // 飾りなので、VoiceOver では読まない
+    }
+
+    // 動かない層：スクロールしたときだけ描きなおす（TimelineView の外に置く）
+    private func staticLayer(
+        _ draw: @escaping (WorldBackgroundPainter, GraphicsContext) -> Void
+    ) -> some View {
+        Canvas { context, size in
+            prepare(&context, size: size)
+            draw(WorldBackgroundPainter(palette: palette, time: 0), context)
+        }
+    }
+
+    // 動く層：1 秒に 30 回くらい描きなおす（「視差効果を減らす」がオンなら止める）
+    private func movingLayer(
+        _ draw: @escaping (WorldBackgroundPainter, GraphicsContext) -> Void
+    ) -> some View {
+        SwiftUI.TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
+            Canvas { context, size in
+                prepare(&context, size: size)
+                let time = timeline.date.timeIntervalSinceReferenceDate
+                draw(WorldBackgroundPainter(palette: palette, time: time), context)
+            }
+        }
+    }
+
+    // デザインの座標（幅 390）で描けるように、拡大・縮小して、スクロールしたぶん上にずらす
+    private func prepare(_ context: inout GraphicsContext, size: CGSize) {
+        let scale = size.width / 390  // デザインの 1 が、画面の何ポイントか
+        context.scaleBy(x: scale, y: scale)
+        context.translateBy(x: 0, y: -scrollOffset / scale)
     }
 }
 
@@ -140,20 +163,36 @@ private struct WorldBackgroundPainter {
         context.fill(Path(CGRect(x: x, y: y, width: w, height: h)), with: .color(color))
     }
 
-    // MARK: - 空
+    // MARK: - 層ごとの描く順番
 
-    func drawSky(in context: GraphicsContext) {
-        // 空の色（上に引っぱったときに見えるところも塗る）
+    // 動かない：空の色（上に引っぱったときに見えるところも塗る）
+    func drawSkyColor(in context: GraphicsContext) {
         fillRect(context, 0, -endless, 390, endless + ground, palette.sky)
+    }
 
+    // 動く：丘のうしろのもの
+    func drawBackMotion(in context: GraphicsContext) {
         if palette.showsStars { drawStars(in: context) }
         drawSun(in: context)
         drawClouds(in: context)
-        drawHills(in: context)
-        drawGate(in: context)
-        drawTraveler(in: context)
-        drawFireflies(in: context)
     }
+
+    // 動かない：丘・ゲートの枠・旅人・地面の下
+    func drawScenery(in context: GraphicsContext) {
+        drawHills(in: context)
+        drawGateFrame(in: context)
+        drawTraveler(in: context)
+        drawUnderground(in: context)
+    }
+
+    // 動く：いちばん手前のもの
+    func drawFrontMotion(in context: GraphicsContext) {
+        drawGatePortal(in: context)
+        drawFireflies(in: context)
+        drawTorch(in: context, dy: ground)
+    }
+
+    // MARK: - 空
 
     // 星（夜だけ。ちかちか光る）
     private func drawStars(in context: GraphicsContext) {
@@ -281,7 +320,8 @@ private struct WorldBackgroundPainter {
         }
     }
 
-    private func drawGate(in context: GraphicsContext) {
+    // ゲートの枠（動かない）
+    private func drawGateFrame(in context: GraphicsContext) {
         // 側面（黒曜石の厚み）
         context.fill(gateSide(0, 94), with: .color(Color(hex: 0x130A20)))
         context.fill(gateSide(36, 18), with: .color(Color(hex: 0x241539)))
@@ -295,8 +335,10 @@ private struct WorldBackgroundPainter {
         for (x, y) in [(CGFloat(0), CGFloat(0)), (54, 36), (0, 76)] {
             context.fill(gateFront(x, y, 18, 18), with: .color(Color(hex: 0x2E1B4A)))
         }
+    }
 
-        // 中のうず（明るさがゆっくり変わる）
+    // ゲートの中のうず（明るさがゆっくり変わる）と、上がる粒（動く）
+    private func drawGatePortal(in context: GraphicsContext) {
         let portal = gateFront(18, 18, 36, 58)
         var inner = context
         inner.opacity = 0.85 + 0.15 * wave(period: 3)
@@ -385,7 +427,7 @@ private struct WorldBackgroundPainter {
 
     // MARK: - 地面の下
 
-    func drawUnderground(in context: GraphicsContext) {
+    private func drawUnderground(in context: GraphicsContext) {
         let dy = ground
         fillRect(context, 0, dy, 390, endless, palette.dirt)  // 土
 
@@ -411,7 +453,7 @@ private struct WorldBackgroundPainter {
             with: .color(palette.deep)
         )
 
-        // 洞窟 1（右。奥ほど暗い）と松明
+        // 洞窟 1（右。奥ほど暗い）
         fillCave(
             context,
             polygon(
@@ -421,7 +463,7 @@ private struct WorldBackgroundPainter {
             ),
             center: CGPoint(x: 290, y: 600 + dy), radiusX: 95, radiusY: 80
         )
-        drawTorch(in: context, dy: dy)
+        // 松明は動くので、手前の動く層で描く（drawFrontMotion）
 
         // 洞窟 2（左。石と深層岩のあいだ）と鍾乳洞
         fillCave(
