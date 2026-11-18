@@ -27,7 +27,7 @@ struct MockWorldRepository: WorldRepository {
                 seed: -1_234_567_890_123,
                 gameMode: .survival,
                 difficulty: .normal,
-                spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
+                spawnPoint: BlockPosition(x: 0, z: 0),
                 lastOpenedVersion: "1.21.40",
                 lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),  // 3時間前
                 time: 2_400_000_00,

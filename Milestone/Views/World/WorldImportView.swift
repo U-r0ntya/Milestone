@@ -282,7 +282,7 @@ struct WorldImportView: View {
             seed: 7_927_532_591_901_215_510,
             gameMode: .survival,
             difficulty: .normal,
-            spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
+            spawnPoint: BlockPosition(x: 0, z: 0),
             lastOpenedVersion: "1.26.52",
             lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),  // 3時間前
             time: 24000 * 120,  // 120日
@@ -309,7 +309,7 @@ struct WorldImportView: View {
         seed: 7_927_532_591_901_215_510,
         gameMode: .survival,
         difficulty: .normal,
-        spawnPoint: BlockPosition(x: 0, y: 64, z: 0),
+        spawnPoint: BlockPosition(x: 0, z: 0),
         lastOpenedVersion: "1.26.52",
         lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),  // 3時間前
         time: 24000 * 120,  // 120日

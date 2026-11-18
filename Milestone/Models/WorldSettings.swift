@@ -77,8 +77,8 @@ enum PermissionLevel: String, Codable, CaseIterable {
 }
 
 // ブロックの位置（スポーン地点など）
+// 高さ（Y）は持たない。統合版の level.dat では、ほとんどのワールドで「未決定（32767）」のままなので使わない
 struct BlockPosition: Codable, Hashable {
     let x: Int
-    let y: Int
     let z: Int
 }

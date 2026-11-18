@@ -161,7 +161,7 @@
 | シード値 | seed | Int64? |  | level.dat（RandomSeed） |
 | ゲームモード | gameMode | GameMode | ○ | level.dat（GameType） |
 | 難易度 | difficulty | Difficulty? |  | level.dat（Difficulty） |
-| スポーン地点 | spawnPoint | BlockPosition? |  | level.dat（SpawnX / Y / Z） |
+| スポーン地点 | spawnPoint | BlockPosition? |  | level.dat（SpawnX / SpawnZ）。高さ（SpawnY）は、ほとんどのワールドで 32767（未決定）のままなので読まない。画面にも X と Z だけ出す |
 | 最後に開いたバージョン | lastOpenedVersion | String? |  | level.dat（lastOpenedWithVersion）から。変えられない |
 | 最後に遊んだ日時 | lastPlayed | Date? |  | level.dat（LastPlayed） |
 | 始まってからの時間 | time | Int64? |  | level.dat（Time。24000 で 1 日） |
