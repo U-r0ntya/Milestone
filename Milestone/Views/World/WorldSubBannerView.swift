@@ -7,6 +7,8 @@ struct WorldSubBannerView: View {
     let world: World
     let ownerName: String  // 持ち主の名前（今は自分のワールドだけなので、ログイン中の人）
     var showsDetails: Bool = true  // 詳細の表を出すか（一覧では出さず、ランクのバーまでにする。登録の画面では出す）
+    var isGlass: Bool = false  // 一覧のガラスの見た目にするか（白い文字、ラベルは背景なしの色文字）
+    @Environment(\.colorScheme) private var colorScheme  // 夜（ダーク）なら、難易度の色を明るくする
     @State private var showsCopied = false  // コピーできたチェックを出しているか
     @State private var copyCount = 0  // コピーした回数（押すたびに、チェックを出しなおす合図）
 
@@ -51,28 +53,41 @@ struct WorldSubBannerView: View {
                         Image(systemName: "clock")
                     }
                     .font(.subheadline.bold())
-                    .foregroundStyle(world.gameMode.accentColor)
+                    .foregroundStyle(accentColor)
                 }
 
                 Spacer(minLength: 0)
 
-                label(
-                    world.gameMode.displayName,
-                    background: world.gameMode.bannerColor,
-                    text: .white
-                )
-                if world.gameMode.showsDifficulty, let difficulty = world.difficulty {
+                if isGlass {
+                    // ガラスの上では、背景を付けず、文字の色だけで見分ける
+                    HStack(spacing: 10) {
+                        Text(world.gameMode.displayName)
+                            .foregroundStyle(world.gameMode.listLabelColor)
+                        if world.gameMode.showsDifficulty, let difficulty = world.difficulty {
+                            Text(difficulty.displayName)
+                                .foregroundStyle(difficulty.listLabelColor(isNight: colorScheme == .dark))
+                        }
+                    }
+                    .font(.caption.bold())
+                } else {
                     label(
-                        difficulty.displayName,
-                        background: difficulty.labelBackgroundColor,
-                        text: difficulty.labelTextColor
+                        world.gameMode.displayName,
+                        background: world.gameMode.bannerColor,
+                        text: .white
                     )
+                    if world.gameMode.showsDifficulty, let difficulty = world.difficulty {
+                        label(
+                            difficulty.displayName,
+                            background: difficulty.labelBackgroundColor,
+                            text: difficulty.labelTextColor
+                        )
+                    }
                 }
             }
 
             // ランク（サバイバルで、日数（time）があるときだけ）
             if world.gameMode == .survival, world.time != nil {
-                WorldRankView(rank: WorldRank(world: world))
+                WorldRankView(rank: WorldRank(world: world), isGlass: isGlass)
             }
 
             // 詳細の表（2列）は、登録の画面だけ。一覧では、日数とシード値のコピーの1行だけにする
@@ -92,7 +107,7 @@ struct WorldSubBannerView: View {
         HStack(spacing: 8) {
             if let time = world.time {
                 Label("\(time / 24000)日目", systemImage: "calendar")
-                    .foregroundStyle(Color.appTextPrimary)
+                    .foregroundStyle(primaryColor)
             }
             Spacer(minLength: 0)
             if let seed = world.seed {
@@ -105,18 +120,20 @@ struct WorldSubBannerView: View {
                         // コピーできたら、左にチェックを出す（少しすると消える）
                         if showsCopied {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(world.gameMode.accentColor)
+                                .foregroundStyle(accentColor)
                                 .symbolEffect(.bounce, value: copyCount)  // 押すたびに弾む
                                 .transition(.scale.combined(with: .opacity))
                         }
                         Text("シード値")
-                            .foregroundStyle(Color.appTextSecondary)
+                            .font(isGlass ? Font.caption.weight(.medium) : nil)
+                            .foregroundStyle(secondaryColor)
                         Text("\(seed)")
-                            .foregroundStyle(Color.appTextPrimary)
+                            .font(isGlass ? Font.caption2 : nil)
+                            .foregroundStyle(primaryColor)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)  // 長いシード値は、少し小さくして1行に収める
                         Image(systemName: "doc.on.doc")
-                            .foregroundStyle(world.gameMode.accentColor)
+                            .foregroundStyle(accentColor)
                     }
                     .padding(.vertical, 6)
                     .contentShape(Rectangle())  // 文字のすきまも押せるようにする
@@ -136,6 +153,19 @@ struct WorldSubBannerView: View {
         }
     }
 
+    // ガラスのときと、ふつうのときの文字の色
+    private var primaryColor: Color {
+        isGlass ? .white : Color.appTextPrimary
+    }
+
+    private var secondaryColor: Color {
+        isGlass ? .white.opacity(0.72) : Color.appTextSecondary
+    }
+
+    private var accentColor: Color {
+        isGlass ? .worldListAccent : world.gameMode.accentColor
+    }
+
     // 詳細の表（2列）
     private var detailGrid: some View {
         LazyVGrid(
@@ -150,10 +180,10 @@ struct WorldSubBannerView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(item.label)
                         .font(.caption)
-                        .foregroundStyle(Color.appTextSecondary)
+                        .foregroundStyle(secondaryColor)
                     Text(item.value)
                         .font(.footnote.weight(.medium))
-                        .foregroundStyle(Color.appTextPrimary)
+                        .foregroundStyle(primaryColor)
                         .lineLimit(1)
                 }
             }

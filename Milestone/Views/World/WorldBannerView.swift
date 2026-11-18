@@ -2,11 +2,13 @@ import SwiftUI
 
 // 大看板：アイコン・ワールド名・星（お気に入り）・バージョン
 // 星とバージョンは overlay で上に重ねる（場所を取らないので、ワールド名の幅を削らない）
+// isGlass：一覧（空の背景）のときは、グラデーションの半透明の帯と、ガラスの丸の星にする
 struct WorldBannerView: View {
     let world: World
     let isFavorite: Bool  // お気に入りか
     let onToggleFavorite: () -> Void  // 星を押したときにすること
     var showsFavorite: Bool = true  // 星を出すか（登録の画面では出さない）
+    var isGlass: Bool = false  // 一覧のガラスの見た目にするか
 
     var body: some View {
         HStack(spacing: 12) {
@@ -35,23 +37,31 @@ struct WorldBannerView: View {
         .overlay(alignment: .topTrailing) {
             if showsFavorite {
                 Button(action: onToggleFavorite) {
-                    Image(systemName: isFavorite ? "star.fill" : "star")
-                        .font(.title3)
-                        .contentTransition(.symbolEffect(.replace))  // 星の形が、なめらかに入れかわる
-                        .symbolEffect(.bounce, value: isFavorite)  // 押したときに、ぴょんと弾む
-                        .foregroundStyle(
-                            isFavorite
-                                ? Color(red: 0.5, green: 0.88, blue: 0.74)
-                                : .white.opacity(0.7)
-                        )
-                        .frame(width: 36, height: 36)
+                    if isGlass {
+                        // ガラスの丸の中に、小さめの星（お気に入りは白で塗る）
+                        star
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(isFavorite ? .white : .white.opacity(0.7))
+                            .worldListGlassCircle(size: 30)
+                            .frame(width: 44, height: 44)  // 指で押せる広さは、丸より大きく取る
+                            .contentShape(Rectangle())
+                    } else {
+                        star
+                            .font(.title3)
+                            .foregroundStyle(
+                                isFavorite
+                                    ? Color(red: 0.5, green: 0.88, blue: 0.74)
+                                    : .white.opacity(0.7)
+                            )
+                            .frame(width: 36, height: 36)
+                    }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(
                     isFavorite ? "お気に入りから外す" : "お気に入りにする"
                 )
-                .padding(.top, 6)
-                .padding(.trailing, 6)
+                .padding(.top, isGlass ? 0 : 6)
+                .padding(.trailing, isGlass ? 0 : 6)
             }
         }
         // 右下：バージョン（level.dat に入っていたときだけ出す）
@@ -64,6 +74,26 @@ struct WorldBannerView: View {
                     .padding(.bottom, 10)
             }
         }
-        .background(world.gameMode.bannerColor)
+        .background {
+            if isGlass {
+                // 半透明のグラデーション（後ろの空が透ける）と、下のふちの細い線
+                Rectangle()
+                    .fill(world.gameMode.listBannerGradient)
+                    .overlay(alignment: .bottom) {
+                        Rectangle()
+                            .fill(.white.opacity(0.14))
+                            .frame(height: 1)
+                    }
+            } else {
+                world.gameMode.bannerColor
+            }
+        }
+    }
+
+    // 星のアイコン（形の入れかわりと、押したときの弾む動き）
+    private var star: some View {
+        Image(systemName: isFavorite ? "star.fill" : "star")
+            .contentTransition(.symbolEffect(.replace))  // 星の形が、なめらかに入れかわる
+            .symbolEffect(.bounce, value: isFavorite)  // 押したときに、ぴょんと弾む
     }
 }
