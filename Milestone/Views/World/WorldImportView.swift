@@ -2,12 +2,13 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 // ワールドの登録の画面（シート）
-// level.dat を選ぶ → 読みこんだ内容を確かめる → 登録する
+// 「Minecraft」フォルダを選ぶ → 見つかったワールドが並ぶ → 登録するものを選ぶ → 登録する
+// 写真もいっしょに読みこむ（写真は端末の中だけに保存する）
 struct WorldImportView: View {
     let user: User  // ログイン中の人（持ち主と機種に使う）
     let onSaved: () -> Void  // 登録できたときに、親（一覧）に知らせる
     @State private var viewModel: WorldImportViewModel
-    @State private var isShowingFilePicker = false  // ファイルを選ぶ画面を出しているか
+    @State private var isShowingFilePicker = false  // フォルダを選ぶ画面を出しているか
     @Environment(\.dismiss) private var dismiss  // 登録できたときに、シートを閉じるための機能
     @Environment(\.colorScheme) private var colorScheme  // ダークモードなら、背景を夜の星空にする
 
@@ -25,12 +26,12 @@ struct WorldImportView: View {
         )
     }
 
-    // プレビュー用。world を渡すと、読みこみ成功の見た目から始まる
+    // プレビュー用。candidates を渡すと、読みこみ成功の見た目から始まる
     init(
         user: User,
         repository: WorldRepository,
         existingWorlds: [World] = [],
-        world: World? = nil,
+        candidates: [WorldImportViewModel.Candidate] = [],
         onSaved: @escaping () -> Void
     ) {
         self.user = user
@@ -39,7 +40,8 @@ struct WorldImportView: View {
             repository: repository,
             existingWorlds: existingWorlds
         )
-        viewModel.world = world
+        viewModel.candidates = candidates
+        viewModel.selectedIds = Set(candidates.filter { !$0.isRegistered }.map(\.id))
         _viewModel = State(initialValue: viewModel)
     }
 
@@ -51,26 +53,22 @@ struct WorldImportView: View {
                     if let errorMessage = viewModel.errorMessage {
                         errorBanner(errorMessage)
                     }
-                    // すでに登録してあるワールドを選んだときの文
-                    if viewModel.isDuplicate {
-                        errorBanner("このワールドは、すでに登録してあります。別のワールドの level.dat を選んでください。")
-                    }
 
-                    // 読みこめたら内容の確認、まだなら場所の説明とボタン
-                    if let world = viewModel.world {
-                        confirmSection(world)
-                    } else {
+                    // 読みこめたらワールドの一覧、まだなら場所の説明とボタン
+                    if viewModel.candidates.isEmpty {
                         guideCard
                         pickButton
-                        Text("読みこんだ情報は、ワールドの名前のほかは、あとから変えられません。")
+                        Text("読みこんだ情報は、ワールドの名前のほかは、あとから変えられません。写真はこの端末の中だけに保存します。")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.8))
                             .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        candidateSection
                     }
                 }
                 .padding(16)
             }
-            // 背景：一覧と同じ空（昼は青い空と雲、夜は星空）
+            // 背景：空（昼は青い空と雲、夜は星空）
             .background {
                 WorldListBackground(isNight: colorScheme == .dark, showsSunAndMoon: false)
                     .ignoresSafeArea()
@@ -87,21 +85,20 @@ struct WorldImportView: View {
                         .foregroundStyle(.white)
                 }
             }
-            // ファイルを選ぶ画面（「ファイル」アプリと同じ見た目）
+            // フォルダを選ぶ画面（「ファイル」アプリと同じ見た目）
             .fileImporter(
                 isPresented: $isShowingFilePicker,
-                allowedContentTypes: [.data]
+                allowedContentTypes: [.folder]
             ) { result in
                 switch result {
                 case .success(let url):
-                    // 選んだファイルを読みこむ
-                    viewModel.importLevelDat(
+                    viewModel.importMinecraftFolder(
                         from: url,
                         ownerId: user.id,
                         device: user.device
                     )
                 case .failure:
-                    viewModel.errorMessage = "ファイルを開けませんでした。もう一度試してください。"
+                    viewModel.errorMessage = "フォルダを開けませんでした。もう一度試してください。"
                 }
             }
             .animation(.default, value: viewModel.errorMessage)  // エラーの文をふわっと出す
@@ -131,26 +128,22 @@ struct WorldImportView: View {
         )
     }
 
-    // level.dat の場所の説明（3つの手順）
+    // Minecraft フォルダの場所の説明（3つの手順）
     private var guideCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("level.dat の場所")
+            Text("Minecraft フォルダの場所")
                 .font(.headline)
                 .foregroundStyle(.white)
 
-            step(1, "「ファイル」アプリを開く", "この\(user.device.displayName)内 → Minecraft")
-            step(
-                2,
-                "ワールドのフォルダまで進む",
-                "games → com.mojang → minecraftWorlds → ワールドのフォルダ"
-            )
-            step(3, "level.dat を選ぶ", "「level.dat_old」ではなく、「level.dat」のほう")
+            step(1, "下のボタンを押す", "「ファイル」アプリと同じ画面が開きます")
+            step(2, "「この\(user.device.displayName)内」を開く", "左上の「ブラウズ」から選べます")
+            step(3, "「Minecraft」フォルダを選んで「開く」", "中のワールドが、写真といっしょに全部並びます")
 
             Rectangle()
                 .fill(.white.opacity(0.14))
                 .frame(height: 1)
 
-            Text("ワールドのフォルダは、記号がならんだ名前です。中の levelname.txt を開くと、ワールドの名前を確かめられます。")
+            Text("並んだワールドの中から、登録したいものを選べます。登録してあるワールドは選べません。")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.75))
         }
@@ -179,50 +172,59 @@ struct WorldImportView: View {
         }
     }
 
-    // 「ファイルを選ぶ」ボタン（失敗のあとも、同じ文のまま。文を変えるとレイアウトが動くため）
+    // 「Minecraft フォルダを選ぶ」ボタン
     private var pickButton: some View {
         Button {
             isShowingFilePicker = true
         } label: {
-            Label("ファイルを選ぶ", systemImage: "folder")
+            Label("Minecraft フォルダを選ぶ", systemImage: "folder")
         }
         .buttonStyle(.worldListGradient)
     }
 
-    // 読みこみ成功：内容の確認と、登録のボタン
+    // 読みこみ成功：見つかったワールドの一覧と、登録のボタン
     @ViewBuilder
-    private func confirmSection(_ world: World) -> some View {
-        Label("読みこめました。内容を確かめてください", systemImage: "checkmark.circle")
-            .font(.subheadline.bold())
-            .foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.3), radius: 4, y: 1)  // 明るい空の上でも読めるように
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-        // 一覧と同じすりガラスの看板（星と開閉ボタンはなし。最初から全部見せる）
-        VStack(spacing: 0) {
-            WorldBannerView(
-                world: world,
-                isFavorite: false,
-                onToggleFavorite: {},
-                showsFavorite: false,
-                isGlass: true
-            )
-            WorldSubBannerView(world: world, ownerName: user.name, isGlass: true)
-                .padding(.bottom, 6)
+    private var candidateSection: some View {
+        HStack {
+            Label("\(viewModel.candidates.count)個のワールドが見つかりました", systemImage: "checkmark.circle")
+                .font(.subheadline.bold())
+            Spacer(minLength: 8)
+            // まだ登録していないものを、全部選ぶ・全部外す
+            if viewModel.hasUnregistered {
+                Button(viewModel.isAllSelected ? "全部外す" : "全部選ぶ") {
+                    viewModel.toggleAll()
+                }
+                .font(.subheadline.bold())
+                .disabled(viewModel.isSaving)
+            }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .foregroundStyle(.white)
+        .shadow(color: .black.opacity(0.3), radius: 4, y: 1)  // 明るい空の上でも読めるように
+
+        VStack(spacing: 0) {
+            ForEach(viewModel.candidates) { candidate in
+                candidateRow(candidate)
+                if candidate.id != viewModel.candidates.last?.id {
+                    Rectangle()
+                        .fill(.white.opacity(0.14))
+                        .frame(height: 1)
+                        .padding(.leading, 112)
+                }
+            }
+        }
         .worldListGlass(cornerRadius: 20)
-        // すでに登録してあるときは、カードをうすくして、登録できないことを見せる
-        .opacity(viewModel.isDuplicate ? 0.45 : 1)
 
         VStack(spacing: 4) {
-            // 登録する（登録中はぐるぐるを出して、押せなくする。すでに登録してあるときも押せない）
+            // 選んだワールドを登録する（登録中はぐるぐるを出して、押せなくする）
             Button {
                 Task {
                     await viewModel.save()
-                    // 登録できたら、親に知らせてシートを閉じる。失敗したら閉じずにエラーを見せる
-                    if viewModel.isSaved {
+                    // 1つでも登録できたら、親に知らせて一覧を読みなおす
+                    if viewModel.savedCount > 0 {
                         onSaved()
+                    }
+                    // 全部登録できたら、シートを閉じる。失敗があれば閉じずにエラーを見せる
+                    if viewModel.isSaved {
                         dismiss()
                     }
                 }
@@ -231,15 +233,15 @@ struct WorldImportView: View {
                     if viewModel.isSaving {
                         ProgressView().tint(.white)
                     } else {
-                        Text("この内容で登録する")
+                        Text("選んだ \(viewModel.selectedCandidates.count) 個を登録する")
                     }
                 }
             }
             .buttonStyle(.worldListGradient)
-            .disabled(viewModel.isSaving || viewModel.isDuplicate)
+            .disabled(viewModel.isSaving || viewModel.selectedCandidates.isEmpty)
 
-            // 別のファイルを選びなおす
-            Button("ファイルを選びなおす") {
+            // 別のフォルダを選びなおす
+            Button("Minecraft フォルダを選びなおす") {
                 isShowingFilePicker = true
             }
             .font(.subheadline.bold())
@@ -248,93 +250,132 @@ struct WorldImportView: View {
             .disabled(viewModel.isSaving)
         }
     }
+
+    // 見つかったワールドの1行：写真・名前・モードと日数・選んでいるか
+    private func candidateRow(_ candidate: WorldImportViewModel.Candidate) -> some View {
+        let isSelected = viewModel.selectedIds.contains(candidate.id)
+        let world = candidate.world
+
+        return Button {
+            viewModel.toggle(candidate)
+        } label: {
+            HStack(spacing: 12) {
+                thumbnail(candidate)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(world.displayName)
+                        .font(.subheadline.bold())
+                        .lineLimit(1)
+                    Text(subtitle(world))
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.75))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if candidate.isRegistered {
+                    Text("登録済み")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white.opacity(0.75))
+                } else {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(isSelected ? Color.worldListAccent : .white.opacity(0.6))
+                }
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())  // 透明なところも、押せる範囲に入れる
+        }
+        .buttonStyle(.plain)
+        .disabled(candidate.isRegistered || viewModel.isSaving)
+        .opacity(candidate.isRegistered ? 0.5 : 1)  // 登録済みは、うすくして選べないことを見せる
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    // 「サバイバル・120日目」のような説明
+    private func subtitle(_ world: World) -> String {
+        var parts = [world.gameMode.displayName]
+        if let time = world.time {
+            parts.append("\(time / 24000)日目")
+        }
+        return parts.joined(separator: "・")
+    }
+
+    // 小さい写真（16:9。写真がなければ、ゲームモードのアイコン）
+    private func thumbnail(_ candidate: WorldImportViewModel.Candidate) -> some View {
+        Color.clear
+            .frame(width: 88, height: 49.5)
+            .overlay {
+                if let data = candidate.photo, let image = UIImage(data: data) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Color.white.opacity(0.12)
+                        .overlay {
+                            Image(systemName: candidate.world.gameMode.iconName)
+                                .foregroundStyle(.white.opacity(0.6))
+                        }
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .accessibilityHidden(true)
+    }
 }
 
-// 選ぶ前
-#Preview("選ぶ前") {
-    WorldImportView(
-        user: User(
-            id: "preview",
-            name: "たいき",
-            iconURL: nil,
-            device: .iPhone,
-            bio: nil
-        ),
-        repository: MockWorldRepository(),
-        onSaved: {}
-    )
-}
-
-// 読みこみ成功
-#Preview("読みこみ成功") {
-    WorldImportView(
-        user: User(
-            id: "preview",
-            name: "たいき",
-            iconURL: nil,
-            device: .iPhone,
-            bio: nil
-        ),
-        repository: MockWorldRepository(),
-        world: World(
-            id: "preview-world",
-            ownerId: "preview",
-            device: .iPhone,
-            createdAt: Date(),
-            name: "はじまりの島",
-            seed: 7_927_532_591_901_215_510,
-            gameMode: .survival,
-            difficulty: .normal,
-            spawnPoint: BlockPosition(x: 0, z: 0),
-            lastOpenedVersion: "1.26.52",
-            lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),  // 3時間前
-            time: 24000 * 120,  // 120日
-            worldType: .infinite,
-            commandsEnabled: false,
-            hasUsedCheats: false,
-            isMultiplayer: true,
-            texturePacksRequired: false,
-            playerPermission: .member
-        ),
-        onSaved: {}
-    )
-}
-
-// すでに登録してあるワールドを選んだとき
-#Preview("登録済み") {
-    // 同じフォルダ名のワールドを、「登録してあるワールド」と「読みこんだワールド」の両方に渡す
-    let world = World(
-        id: "preview-world",
+// プレビュー用のワールド
+private func previewWorld(_ name: String, folder: String, mode: GameMode, days: Int64) -> World {
+    World(
+        id: "preview-\(folder)",
         ownerId: "preview",
         device: .iPhone,
         createdAt: Date(),
-        name: "はじまりの島",
+        name: name,
         seed: 7_927_532_591_901_215_510,
-        gameMode: .survival,
+        gameMode: mode,
         difficulty: .normal,
         spawnPoint: BlockPosition(x: 0, z: 0),
         lastOpenedVersion: "1.26.52",
         lastPlayed: Date().addingTimeInterval(-3 * 60 * 60),  // 3時間前
-        time: 24000 * 120,  // 120日
+        time: 24000 * days,
         worldType: .infinite,
         commandsEnabled: false,
         hasUsedCheats: false,
         isMultiplayer: true,
         texturePacksRequired: false,
         playerPermission: .member,
-        folderName: "preview-folder"
+        folderName: folder
     )
-    return WorldImportView(
-        user: User(
-            id: "preview",
-            name: "たいき",
-            iconURL: nil,
-            device: .iPhone,
-            bio: nil
-        ),
+}
+
+private let previewUser = User(
+    id: "preview",
+    name: "たいき",
+    iconURL: nil,
+    device: .iPhone,
+    bio: nil
+)
+
+// 選ぶ前
+#Preview("選ぶ前") {
+    WorldImportView(
+        user: previewUser,
         repository: MockWorldRepository(),
-        existingWorlds: [world],
-        world: world,
+        onSaved: {}
+    )
+}
+
+// 読みこみ成功（1つは登録済み）
+#Preview("読みこみ成功") {
+    WorldImportView(
+        user: previewUser,
+        repository: MockWorldRepository(),
+        candidates: [
+            .init(world: previewWorld("はじまりの島", folder: "a", mode: .survival, days: 120), photo: nil, isRegistered: false),
+            .init(world: previewWorld("建築用", folder: "b", mode: .creative, days: 12), photo: nil, isRegistered: false),
+            .init(world: previewWorld("村づくりハード", folder: "c", mode: .survival, days: 45), photo: nil, isRegistered: true),
+        ],
         onSaved: {}
     )
 }

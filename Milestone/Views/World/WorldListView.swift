@@ -1,11 +1,12 @@
 import SwiftUI
 
-// ワールドの一覧：「ワールドを登録」→ お気に入り → 最近遊んだワールド → 残りのワールド
+// ワールドの一覧：お気に入り → 最近遊んだワールド → 残りのワールド（どれも同じ写真のカード）
+// ワールドの登録と全部の更新は、右上の ＋ と ↻ から
 struct WorldListView: View {
     let user: User  // ログイン中の人
     @State private var viewModel: WorldListViewModel
     @State private var isShowingImport = false  // 登録の画面（シート）を出しているか
-    @Environment(\.colorScheme) private var colorScheme  // ダークモードなら、背景を夜の星空にする
+    @Environment(\.colorScheme) private var colorScheme  // ダークモードなら、背景を黒にする
     @State private var scrollOffset: CGFloat = 0  // 下に何ポイントスクロールしたか
 
     // 上のバーに「ワールド」を出すか（画面の中の大きいタイトルが、スクロールで上に隠れたら出す）
@@ -65,23 +66,21 @@ struct WorldListView: View {
         } action: { _, newValue in
             scrollOffset = newValue
         }
-        // 背景：昼は青い空、夜は星空（スクロールしても動かない）
+        // 背景：ライトは見やすい白、ダークは黒（写真のカードの枠の色が引き立つように、無地にする）
         .background {
-            WorldListBackground(isNight: colorScheme == .dark)
+            Color(hex: colorScheme == .dark ? 0x07080C : 0xF4F5F8)
                 .ignoresSafeArea()
         }
-        // 上のバー：ふだんは色を付けず空を見せる。スクロールして大きいタイトルが隠れたら、バーと「ワールド」を出す
+        // 上のバー：ふだんは色を付けない。スクロールして大きいタイトルが隠れたら、バーと「ワールド」を出す
         .navigationTitle("ワールド")  // 次の画面の戻るボタンに出る名前
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackgroundVisibility(showsBarTitle ? .visible : .hidden, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .animation(.easeInOut(duration: 0.2), value: showsBarTitle)
         .toolbar {
             // まん中：小さい「ワールド」（スクロールしたときだけ見える）
             ToolbarItem(placement: .principal) {
                 Text("ワールド")
                     .font(.headline)
-                    .foregroundStyle(.white)
                     .opacity(showsBarTitle ? 1 : 0)
                     .accessibilityHidden(!showsBarTitle)
             }
@@ -138,11 +137,9 @@ struct WorldListView: View {
             if !viewModel.worlds.isEmpty {
                 Text("\(viewModel.worlds.count)つのワールド")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.88))
+                    .foregroundStyle(.secondary)
             }
         }
-        .foregroundStyle(.white)
-        .shadow(color: .black.opacity(0.25), radius: 6, y: 1)  // 明るい空の上でも読めるように
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, 4)
     }
@@ -156,18 +153,17 @@ struct WorldListView: View {
                 .worldListGlassCircle(size: 56)
             Text("ワールドの登録は、iPhone・iPad でマイクラを遊んでいる人だけが使えます")
                 .font(.headline)
-                .foregroundStyle(.white)
             Text(
                 "あなたの機種（\(user.device.displayName)）では、ワールドのファイルを取り出せないため、登録できません。"
             )
             .font(.footnote)
-            .foregroundStyle(.white.opacity(0.75))
+            .foregroundStyle(.secondary)
             Rectangle()
-                .fill(.white.opacity(0.14))
+                .fill(.primary.opacity(0.1))
                 .frame(height: 1)
             Text("投稿には、バージョン・機種・シード値を手で入力して付けられます。")
                 .font(.footnote)
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(.secondary)
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
@@ -183,7 +179,6 @@ struct WorldListView: View {
             worldSections
         } else if viewModel.isLoading {
             ProgressView()
-                .tint(.white)
                 .padding(.top, 40)
         } else if let errorMessage = viewModel.errorMessage {
             ContentUnavailableView {
@@ -196,14 +191,12 @@ struct WorldListView: View {
                 }
                 .buttonStyle(.primary)
             }
-            .foregroundStyle(.white)  // 空の背景の上なので、白い文字にする
         } else if canImport {
             ContentUnavailableView(
                 "まだワールドがありません",
                 systemImage: "cube",
                 description: Text("右上の ＋ から、最初のワールドを登録してみよう")
             )
-            .foregroundStyle(.white)
         }
         // 登録できない機種は、上の説明のカードだけを出す
     }
@@ -220,7 +213,6 @@ struct WorldListView: View {
                     .foregroundStyle(Color.worldListAccent)
                 Text(message)
                     .font(.footnote)
-                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Button {
                     withAnimation(.snappy) {
@@ -229,7 +221,7 @@ struct WorldListView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.footnote.bold())
-                        .foregroundStyle(.white.opacity(0.75))
+                        .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("とじる")
@@ -244,54 +236,47 @@ struct WorldListView: View {
         if let errorMessage = viewModel.errorMessage {
             Text(errorMessage)
                 .font(.footnote.bold())
-                .foregroundStyle(Color(hex: 0xFFD9D5))  // 空の上でも読める、うすい赤
+                .foregroundStyle(.red)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
 
+        // カードの見た目は全部同じ。見出しだけで分ける
         if let favorite = viewModel.favoriteWorld {
-            sectionHeader("お気に入り", systemImage: "star.fill")
-            card(favorite, startsOpen: true)
+            sectionHeader("お気に入り")
+            card(favorite)
         }
 
         if let recent = viewModel.recentWorld {
             // 開いた日時で選ばれたときは「閲覧した」、遊んだ日時で選ばれたときは「遊んだ」
-            sectionHeader(
-                viewModel.isRecentByOpened ? "最近閲覧したワールド" : "最近遊んだワールド",
-                systemImage: viewModel.isRecentByOpened ? "eye" : "clock"
-            )
-            card(recent, startsOpen: true)
+            sectionHeader(viewModel.isRecentByOpened ? "最近閲覧したワールド" : "最近遊んだワールド")
+            card(recent)
         }
 
         ForEach(viewModel.otherWorlds) { world in
-            card(world, startsOpen: false)
+            card(world)
         }
     }
 
-    private func sectionHeader(_ title: String, systemImage: String)
-        -> some View
-    {
-        Label(title, systemImage: systemImage)
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
             .font(.headline)
-            .foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.35), radius: 4, y: 1)  // 明るい空の上でも読めるように
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 8)
+            .accessibilityAddTraits(.isHeader)
     }
 
-    private func card(_ world: World, startsOpen: Bool) -> some View {
-        // カードを押すと、ワールドの情報の画面に進む（星と矢印のボタンは、それぞれ自分の動きを優先する）
+    private func card(_ world: World) -> some View {
+        // カードを押すと、ワールドの情報の画面に進む（星のボタンは、自分の動きを優先する）
         NavigationLink(value: world) {
-            cardBody(world, startsOpen: startsOpen)
+            cardBody(world)
         }
         .buttonStyle(.plain)
     }
 
-    private func cardBody(_ world: World, startsOpen: Bool) -> some View {
+    private func cardBody(_ world: World) -> some View {
         WorldCardView(
             world: world,
-            ownerName: user.name,
             isFavorite: viewModel.favoriteWorldId == world.id,
-            startsOpen: startsOpen,
             onToggleFavorite: {
                 Task {
                     await viewModel.toggleFavorite(

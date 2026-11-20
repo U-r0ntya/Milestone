@@ -14,7 +14,7 @@ struct WorldDetailView: View {
     @State private var isShowingDeleteDialog = false  // 削除の確認を出しているか
     @State private var isShowingFilePicker = false  // 「ファイル」アプリの選ぶ画面を出しているか
     @State private var didUpdate = false  // 更新できたか（「更新しました」を出す）
-    @State private var showsPickFallback = false  // 「ファイルを選びなおす」を出すか（ブックマークで失敗したとき）
+    @State private var showsPickFallback = false  // 「Minecraft フォルダを選ぶ」を出すか（覚えた場所で失敗したとき）
     @State private var didCopySeed = false  // シード値をコピーしたか（アイコンを切りかえる）
     @State private var scrollOffset: CGFloat = 0  // 下に何ポイントスクロールしたか（背景を動かすのに使う）
     @Environment(\.dismiss) private var dismiss  // 削除できたら、一覧に戻るのに使う
@@ -139,17 +139,17 @@ struct WorldDetailView: View {
                     }
                 }
                 .disabled(viewModel.isUpdating)
-                .accessibilityLabel("level.dat から更新する")
+                .accessibilityLabel("Minecraft フォルダから更新する")
             }
         }
         // 名前を変える画面（下から出る）
         .sheet(isPresented: $isShowingRename) {
             WorldRenameView(world: world, viewModel: viewModel)
         }
-        // 「ファイル」アプリで level.dat を選ぶ（選んだら、そのファイルで更新する）
+        // 「ファイル」アプリで Minecraft フォルダを選ぶ（ワールドのフォルダ・level.dat でもよい。フォルダなら写真も新しくなる）
         .fileImporter(
             isPresented: $isShowingFilePicker,
-            allowedContentTypes: [.data]
+            allowedContentTypes: [.folder, .data]
         ) { result in
             guard case .success(let url) = result else { return }
             Task { await update(from: url) }
@@ -357,7 +357,7 @@ struct WorldDetailView: View {
 
     // MARK: - 下のボタン
 
-    // 名前を変える・level.dat から更新する（ブックマークで読み、だめなら選びなおす）・ワールドの削除
+    // 名前を変える・Minecraft フォルダから更新する（覚えた場所で読み、だめなら選びなおす）・ワールドの削除
     private func bottomButtons(_ world: World) -> some View {
         VStack(spacing: 10) {
             Button("名前を変える") {
@@ -365,15 +365,15 @@ struct WorldDetailView: View {
             }
             .buttonStyle(.worldGlass)
 
-            Button(viewModel.isUpdating ? "更新中…" : "level.dat から更新する") {
+            Button(viewModel.isUpdating ? "更新中…" : "Minecraft フォルダから更新する") {
                 Task { await reloadFromBookmark() }
             }
             .buttonStyle(.worldGlass)
             .disabled(viewModel.isUpdating)
 
-            // ブックマークで更新できなかったときは、ファイルを選びなおせるようにする
+            // 覚えた場所で更新できなかったときは、選びなおせるようにする
             if showsPickFallback {
-                Button("ファイルを選びなおす") {
+                Button("Minecraft フォルダを選ぶ") {
                     isShowingFilePicker = true
                 }
                 .buttonStyle(.worldGlass)
@@ -450,19 +450,21 @@ struct WorldDetailView: View {
 
     // MARK: - 更新
 
-    // ブックマークから、前に選んだ level.dat を読んで更新する（ブックマークがなければ、選ぶ画面を出す）
+    // 覚えた Minecraft フォルダ（なければ、このワールドで前に選んだ場所）から読んで更新する
+    // どちらもなければ、選ぶ画面を出す
     private func reloadFromBookmark() async {
         didUpdate = false
         showsPickFallback = false
         viewModel.errorMessage = nil
-        if let url = LevelDatBookmarkStore.resolve(for: worldId) {
+        let minecraftFolder = world?.folderName != nil ? MinecraftFolderStore.resolve() : nil
+        if let url = minecraftFolder ?? LevelDatBookmarkStore.resolve(for: worldId) {
             await update(from: url)
         } else {
-            isShowingFilePicker = true  // ブックマークがないワールドは、選んでもらう
+            isShowingFilePicker = true  // 覚えた場所がないワールドは、選んでもらう
         }
     }
 
-    // 指定の level.dat で更新する。失敗したら、「ファイルを選びなおす」を出す
+    // 指定の場所で更新する。失敗したら、「Minecraft フォルダを選ぶ」を出す
     private func update(from url: URL) async {
         didUpdate = false
         viewModel.errorMessage = nil
