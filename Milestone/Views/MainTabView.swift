@@ -4,52 +4,24 @@ import SwiftUI
 struct MainTabView: View {
     let authViewModel: AuthViewModel
     let user: User  // ログイン中の人
-
-    @State private var draftDialogKey: String? = nil // カードに出す下書きのキー（nil ならカードを出さない)
-
+    @State private var isShowingSettings = false
 
     var body: some View {
-        TabView {
-            // タイムライン
-            NavigationStack {
-                TimelineView(
-                    user: user,
-                    draftDialogKey: $draftDialogKey
-                )  // ログイン中の人と、下書きのカードの値を渡す
-                .appHeader("タイムライン")
-            }
-            .tabItem {
-                Label("タイムライン", systemImage: "text.bubble")
-            }
-
-            // ワールド
-            NavigationStack {
-                WorldListView(user: user)  // 上のバーと背景は、WorldListView の中で付ける（空の背景）
-            }
-            .tabItem {
-                Label("ワールド", systemImage: "cube")
-            }
-
-            // プロフィール
-            NavigationStack {
-                ProfileView(authViewModel: authViewModel, user: user)
-                    .appHeader("プロフィール")
-            }
-            .tabItem {
-                Label("プロフィール", systemImage: "person")
-            }
-        }.overlay {
-            if let key = draftDialogKey {
-                DraftSaveDialog(
-                    onSave: {
-                        draftDialogKey = nil // 入力ごとに下書きはもう保存されているので、閉じるだけ
-                    },
-                    onDelete: {
-                        UserDefaults.standard.removeObject(forKey: key)
-                        draftDialogKey = nil
+        NavigationStack {
+            WorldListView(user: user)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            isShowingSettings.toggle()
+                        } label: {
+                            Image(systemName: "gearshape")
+                        }.accessibilityLabel("設定")
                     }
-                )
-            }
+                }
+                .sheet(isPresented: $isShowingSettings) {
+                    SettingsView(authViewModel: authViewModel)
+                }
+                .accessibilityLabel("閉じる")
         }
     }
 }
