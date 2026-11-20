@@ -25,3 +25,10 @@ struct MainTabView: View {
         }
     }
 }
+
+#Preview {
+    MainTabView(
+        authViewModel: AuthViewModel(repository: MockUserRepository()),
+        user: User(id: "preview", name: "たいき", iconURL: nil, device: .iPhone, bio: nil)
+    )
+}
