@@ -150,8 +150,7 @@ struct WorldCardView: View {
     // 左上：ランクのバッジ（ガラス。縁はカードの枠と同じ色）
     private func badge(_ style: WorldCardStyle) -> some View {
         Text(style.label)
-            .font(.system(size: 10.5).width(.condensed))
-            .tracking(0.84)
+            .font(.system(size: 10.5, weight: .semibold))
             .lineLimit(1)
             .foregroundStyle(Color(hex: 0xF4F4F8))
             .padding(.horizontal, 13)

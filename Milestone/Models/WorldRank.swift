@@ -1,9 +1,8 @@
 import Foundation
 
-// ワールドのランク（サバイバルだけ）。一覧のカードの枠の色と、左上のバッジに使う
+// ワールドのランク（サバイバルだけ）。一覧のカードの枠とバッジの色に使う
 // World から毎回計算する（Firestore には保存しない）
-// 点 = ワールドの日数 × 倍率（小数は切り捨て）。点が増えると 木 → 石 → … → ネザライト と上がり、
-// ネザライトからは 365 点ごとに Lv. が上がる（上限なし）
+// 点 = ワールドの日数 × 倍率（小数は切り捨て）。点が増えると 木 → 石 → … → ネザライト と上がる
 // level.dat に日数（time）が入っていなかったワールドは、ランクを出さない
 struct WorldRank {
     // ランクの種類（木 → ネザライト）
@@ -31,7 +30,6 @@ struct WorldRank {
     }
 
     let tier: Tier  // 今のランク
-    let level: Int?  // ネザライトの Lv.（ネザライト以外は nil）
 
     init(world: World) {
         // 日数（time は 24000 で 1 日。level.dat に入っていなかったときは 0 日）
@@ -53,8 +51,5 @@ struct WorldRank {
         tier =
             Tier.allCases.last(where: { $0.requiredPoints <= points })
             ?? .wood
-
-        // ネザライトの Lv.：365 点で Lv.1、そこから 365 点ごとに 1 つ上がる（切り捨て）
-        level = tier == .netherite ? 1 + (points - 365) / 365 : nil
     }
 }
