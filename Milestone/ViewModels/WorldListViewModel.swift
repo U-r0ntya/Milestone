@@ -293,13 +293,13 @@ final class WorldListViewModel {
         // updateWorld が失敗したときの文が残っているので消す（結果は updateAllMessage で出す）
         errorMessage = nil
 
-        // 結果の文を作る（0 件のものは出さない）
+        // 結果の文を作る（0 件のものは出さない。2つ目からは改行して並べる）
         var message = "\(updatedCount) 件を更新しました"
         if failedCount > 0 {
-            message += "\(failedCount) 件は読めませんでした"
+            message += "\n\(failedCount) 件は読めませんでした"
         }
         if noBookmarkCount > 0 {
-            message += "\(noBookmarkCount) 件は、右上の ＋ から Minecraft フォルダを選ぶと更新できます"
+            message += "\n\(noBookmarkCount) 件は、右上の ＋ から Minecraft フォルダを選ぶと更新できます"
         }
         updateAllMessage = message
     }
