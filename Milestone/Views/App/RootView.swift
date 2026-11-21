@@ -11,7 +11,7 @@ struct RootView: View {
             case .signedOut:
                 LoginView(authViewModel: authViewModel)  // ログイン画面
             case .signedIn(let user):
-                MainTabView(authViewModel: authViewModel, user: user)
+                MainView(authViewModel: authViewModel, user: user)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
