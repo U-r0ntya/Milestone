@@ -28,7 +28,7 @@ struct SettingsView: View {
             }
             Section {
                 Text(
-                    "このアプリは Minecraft の公式アプリではありません。Mojang および Microsoft とは関係ありません。"
+                    "このアプリは Minecraft の公式アプリではありません。\nMojang および Microsoft とは関係ありません。"
                 ).font(.footnote)
             }
         }

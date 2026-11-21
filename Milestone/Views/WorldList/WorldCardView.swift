@@ -26,7 +26,10 @@ struct WorldCardView: View {
             // 写真の端を暗くする（縁の線とのつなぎ目をなじませる）
             .overlay {
                 RoundedRectangle(cornerRadius: 27)
-                    .stroke(shadeColor.opacity(0.7), lineWidth: 22)
+                    .stroke(
+                        shadeColor.opacity(isDark ? 0.7 : 0.4),
+                        lineWidth: (isDark ? 22 : 14)
+                    )
                     .blur(radius: 12)
             }
             // 下を少し暗くぼかす（文字を読みやすくする）
@@ -50,9 +53,12 @@ struct WorldCardView: View {
             // 外側のほのかな光（ダークだけ）と影
             .shadow(color: style.glow(isDark: isDark), radius: 14)
             .shadow(
-                color: isDark ? .black.opacity(0.6) : Color(red: 30 / 255, green: 40 / 255, blue: 70 / 255).opacity(0.18),
-                radius: isDark ? 15 : 12,
-                y: isDark ? 10 : 8
+                color: isDark
+                    ? .black.opacity(0.6)
+                    : Color(red: 30 / 255, green: 40 / 255, blue: 70 / 255)
+                        .opacity(0.18),
+                radius: isDark ? 15 : 5,
+                y: isDark ? 10 : 6
             )
             .accessibilityElement(children: .contain)
     }
@@ -134,7 +140,11 @@ struct WorldCardView: View {
             if let time = world.time {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text("\(time / 24000)")
-                        .font(.system(size: 24, weight: .semibold).width(.condensed))
+                        .font(
+                            .system(size: 24, weight: .semibold).width(
+                                .condensed
+                            )
+                        )
                     Text("日目")
                         .font(.system(size: 11, weight: .medium))
                 }
@@ -158,10 +168,14 @@ struct WorldCardView: View {
             .background(.ultraThinMaterial, in: Capsule())
             .environment(\.colorScheme, .dark)  // ライトでも暗いガラスにする
             .overlay {
-                Capsule().strokeBorder(style.frameGradient(isDark: isDark), lineWidth: 1)
+                Capsule().strokeBorder(
+                    style.frameGradient(isDark: isDark),
+                    lineWidth: 1
+                )
             }
             .overlay {
-                Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1).padding(1)
+                Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1)
+                    .padding(1)
             }
             .padding(.leading, sidePadding)
             .padding(.top, topBottomPadding)
@@ -179,10 +193,14 @@ struct WorldCardView: View {
                 .background(.ultraThinMaterial, in: Circle())
                 .environment(\.colorScheme, .dark)
                 .overlay {
-                    Circle().strokeBorder(style.frameGradient(isDark: isDark), lineWidth: 1)
+                    Circle().strokeBorder(
+                        style.frameGradient(isDark: isDark),
+                        lineWidth: 1
+                    )
                 }
                 .overlay {
-                    Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1).padding(1)
+                    Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1)
+                        .padding(1)
                 }
                 .frame(width: 44, height: 44)  // 指で押せる広さは、丸より大きく取る
                 .contentShape(Rectangle())
