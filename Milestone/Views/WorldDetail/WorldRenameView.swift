@@ -80,7 +80,7 @@ struct WorldRenameView: View {
             .navigationTitle("ワールド名を変える")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.height(220)])
         .presentationBackground(Color.appBackground)
         .onAppear {
             viewModel.errorMessage = nil  // 前回のエラーを消す
