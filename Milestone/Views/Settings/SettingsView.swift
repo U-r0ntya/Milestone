@@ -11,7 +11,7 @@ struct SettingsView: View {
                     Text(user.name).padding(.leading, 3)
                 } icon: {
                     Image(systemName: "person")
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(.primary)
                         .font(.system(size: 15))
                 }
                 Button(role: .destructive) {
@@ -21,6 +21,7 @@ struct SettingsView: View {
                         Text("ログアウト")
                     } icon: {
                         Image(systemName: "rectangle.portrait.and.arrow.forward")
+                            .foregroundStyle(Color.red)
                             .font(.system(size: 15))
                     }
                 }.padding(.leading, 3)
