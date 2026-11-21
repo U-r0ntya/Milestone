@@ -16,27 +16,7 @@ struct PrimaryButtonStyle: ButtonStyle {
     }
 }
 
-// サブのボタン：白いカプセルに紫の枠と文字（戻るなど）
-struct SecondaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 20, weight: .bold))
-            .foregroundStyle(.appTextPrimary)
-            .frame(minWidth: 120, minHeight: 48)
-            .padding(.horizontal, 24)
-            .background(Color.appCard)
-            .clipShape(Capsule())
-            .overlay(Capsule().stroke(Color.appCardBorder, lineWidth: 1))
-            .opacity(configuration.isPressed ? 0.7 : 1)
-    }
-}
-
-// .buttonStyle(.primary) / .buttonStyle(.secondary) と短く書けるようにする
+// .buttonStyle(.primary) と短く書けるようにする
 extension ButtonStyle where Self == PrimaryButtonStyle {
     static var primary: PrimaryButtonStyle { PrimaryButtonStyle() }
 }
-
-extension ButtonStyle where Self == SecondaryButtonStyle {
-    static var secondary: SecondaryButtonStyle { SecondaryButtonStyle() }
-}
-

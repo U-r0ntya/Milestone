@@ -12,6 +12,11 @@ struct WorldImportView: View {
     @Environment(\.dismiss) private var dismiss  // 登録できたときに、シートを閉じるための機能
     @Environment(\.colorScheme) private var colorScheme  // ダークモードなら、背景を夜の星空にする
 
+    // 今使っている端末の機種（ワールドを登録した機種として保存する。説明の文にも使う）
+    private var device: Device {
+        UIDevice.current.userInterfaceIdiom == .pad ? .iPad : .iPhone
+    }
+
     // ほかの画面と同じ2つの init（MainActor の都合）
     // existingWorlds：すでに登録してあるワールド（同じワールドを2回登録しないために使う）
     init(
@@ -95,7 +100,7 @@ struct WorldImportView: View {
                     viewModel.importMinecraftFolder(
                         from: url,
                         ownerId: user.id,
-                        device: user.device
+                        device: device
                     )
                 case .failure:
                     viewModel.errorMessage = "フォルダを開けませんでした。もう一度試してください。"
@@ -136,7 +141,7 @@ struct WorldImportView: View {
                 .foregroundStyle(.white)
 
             step(1, "下のボタンを押す", "「ファイル」アプリと同じ画面が開きます")
-            step(2, "「この\(user.device.displayName)内」を開く", "左上の「ブラウズ」から選べます")
+            step(2, "「この\(device.displayName)内」を開く", "左上の「ブラウズ」から選べます")
             step(3, "「Minecraft」フォルダを選んで「開く」", "中のワールドが、写真といっしょに全部並びます")
 
             Rectangle()
@@ -349,13 +354,7 @@ private func previewWorld(_ name: String, folder: String, mode: GameMode, days: 
     )
 }
 
-private let previewUser = User(
-    id: "preview",
-    name: "たいき",
-    iconURL: nil,
-    device: .iPhone,
-    bio: nil
-)
+private let previewUser = User(id: "preview", name: "たいき")
 
 // 選ぶ前
 #Preview("選ぶ前") {

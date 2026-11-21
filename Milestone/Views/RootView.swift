@@ -10,8 +10,6 @@ struct RootView: View {
                 ProgressView()
             case .signedOut:
                 LoginView(authViewModel: authViewModel)  // ログイン画面
-            case .needsOnboarding:
-                OnboardingView(authViewModel: authViewModel)  // 初回設定
             case .signedIn(let user):
                 MainTabView(authViewModel: authViewModel, user: user)
             }

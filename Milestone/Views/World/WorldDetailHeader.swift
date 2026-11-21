@@ -1,26 +1,19 @@
 import SwiftUI
 
 // ワールドの情報のいちばん上（天気アプリの「都市名と気温」の位置）
-// ワールド名・何日目か・ランク・難易度と次のランクまでの日数
+// ワールド名・何日目か・ゲームモード・難易度
 struct WorldDetailHeader: View {
     let world: World
-    let rank: WorldRank?  // サバイバルで日数があるときだけ
 
-    // 3 行目：ランク名（ランクがなければゲームモード）
+    // 3 行目：ゲームモード
     private var mainLine: String {
-        rank?.title ?? world.gameMode.displayName
+        world.gameMode.displayName
     }
 
-    // 4 行目：難易度と、次のランクまであと何日（入っているものだけ「・」でつなぐ）
+    // 4 行目：難易度（難易度を出すモードで、入っているときだけ）
     private var subLine: String? {
-        var parts: [String] = []
-        if world.gameMode.showsDifficulty, let difficulty = world.difficulty {
-            parts.append(difficulty.displayName)
-        }
-        if let rank {
-            parts.append("\(rank.nextName) まで あと\(rank.daysToNext)日")
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: " ・ ")
+        guard world.gameMode.showsDifficulty, let difficulty = world.difficulty else { return nil }
+        return difficulty.displayName
     }
 
     var body: some View {

@@ -1,46 +1,15 @@
 import Foundation
 
-// 機種。Firestore や JSON には英語の名前（rawValue）を文字で保存する
-enum Device: String, Codable, CaseIterable {
-    case nintendoSwitch
-    case playStation
-    case xbox
+// ワールドを登録した端末の機種（iPhone・iPad だけ）。Firestore には英語の名前（rawValue）を文字で保存する
+enum Device: String, Codable {
     case iPhone
     case iPad
-    case android
-    case windows
-    case other
 
     // 画面に出す名前
     var displayName: String {
         switch self {
-        case .nintendoSwitch: "Switch・Switch2"
-        case .playStation: "PlayStation"
-        case .xbox: "Xbox"
         case .iPhone: "iPhone"
         case .iPad: "iPad"
-        case .android: "Android"
-        case .windows: "Windows（PC）"
-        case .other: "その他"
-        }
-    }
-    
-    // 機種ごとのアイコン（SF Symbols の名前）
-    var iconName: String {
-        switch self {
-        case .nintendoSwitch, .playStation, .xbox:
-            "gamecontroller.fill"
-        case .iPhone:
-            "iphone"
-        case .iPad:
-            "ipad"
-        case .android:
-            "candybarphone"
-        case .windows:
-            "desktopcomputer"
-        case .other:
-            "questionmark.circle"
         }
     }
 }
-

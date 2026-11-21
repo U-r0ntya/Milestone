@@ -14,11 +14,6 @@ struct WorldListView: View {
         scrollOffset > 44  // 大きいタイトルの 1 行ぶん
     }
 
-    // ワールドを登録できる機種か（level.dat を取り出せるのは、iPhone と iPad だけ）
-    private var canImport: Bool {
-        user.device == .iPhone || user.device == .iPad
-    }
-
     // ほかの画面と同じ2つの init（MainActor の都合）
     // お気に入りの最初の値は、ここで渡す（.task で入れると、タブを戻るたびに古い値で上書きされる）
     init(user: User) {
@@ -49,10 +44,7 @@ struct WorldListView: View {
         ScrollView {
             VStack(spacing: 12) {
                 header
-                // 登録できない機種には説明を出す（登録できる機種は、右上の ＋ から登録する）
-                if !canImport {
-                    unsupportedCard
-                }
+
                 content
             }
             .padding(16)
@@ -74,7 +66,10 @@ struct WorldListView: View {
         // 上のバー：ふだんは色を付けない。スクロールして大きいタイトルが隠れたら、バーと「ワールド」を出す
         .navigationTitle("ワールド")  // 次の画面の戻るボタンに出る名前
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackgroundVisibility(showsBarTitle ? .visible : .hidden, for: .navigationBar)
+        .toolbarBackgroundVisibility(
+            showsBarTitle ? .visible : .hidden,
+            for: .navigationBar
+        )
         .animation(.easeInOut(duration: 0.2), value: showsBarTitle)
         .toolbar {
             // まん中：小さい「ワールド」（スクロールしたときだけ見える）
@@ -85,18 +80,17 @@ struct WorldListView: View {
                     .accessibilityHidden(!showsBarTitle)
             }
             // 右：＋（ワールドを登録）と、全部のワールドの更新
-            if canImport {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isShowingImport = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("ワールドを登録")
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isShowingImport = true
+                } label: {
+                    Image(systemName: "plus")
                 }
+                .accessibilityLabel("ワールドを登録")
             }
+
             // 全部のワールドを、level.dat を読みなおして更新する（ワールドがあるときだけ）
-            if canImport, !viewModel.worlds.isEmpty {
+            if !viewModel.worlds.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task { await viewModel.updateAllWorlds() }
@@ -144,34 +138,6 @@ struct WorldListView: View {
         .padding(.leading, 4)
     }
 
-    // 登録できない機種に出す説明（Switch・PlayStation・Xbox・Android・Windows など）
-    private var unsupportedCard: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "cube")
-                .font(.title2)
-                .foregroundStyle(Color.worldListAccent)
-                .worldListGlassCircle(size: 56)
-            Text("ワールドの登録は、iPhone・iPad でマイクラを遊んでいる人だけが使えます")
-                .font(.headline)
-            Text(
-                "あなたの機種（\(user.device.displayName)）では、ワールドのファイルを取り出せないため、登録できません。"
-            )
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            Rectangle()
-                .fill(.primary.opacity(0.1))
-                .frame(height: 1)
-            Text("投稿には、バージョン・機種・シード値を手で入力して付けられます。")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 28)
-        .worldListGlass(cornerRadius: 20)
-    }
-
     // ワールドがあるか・読み込み中か・エラーかで、出すものを切り替える
     @ViewBuilder
     private var content: some View {
@@ -191,14 +157,13 @@ struct WorldListView: View {
                 }
                 .buttonStyle(.primary)
             }
-        } else if canImport {
+        } else {
             ContentUnavailableView(
                 "まだワールドがありません",
                 systemImage: "cube",
                 description: Text("右上の ＋ から、最初のワールドを登録してみよう")
             )
         }
-        // 登録できない機種は、上の説明のカードだけを出す
     }
 
     // お気に入り → 最近遊んだワールド → 残り（残りには見出しを付けない）
@@ -248,7 +213,9 @@ struct WorldListView: View {
 
         if let recent = viewModel.recentWorld {
             // 開いた日時で選ばれたときは「閲覧した」、遊んだ日時で選ばれたときは「遊んだ」
-            sectionHeader(viewModel.isRecentByOpened ? "最近閲覧したワールド" : "最近遊んだワールド")
+            sectionHeader(
+                viewModel.isRecentByOpened ? "最近閲覧したワールド" : "最近遊んだワールド"
+            )
             card(recent)
         }
 
@@ -292,13 +259,7 @@ struct WorldListView: View {
 #Preview {
     NavigationStack {
         WorldListView(
-            user: User(
-                id: "preview",
-                name: "たいき",
-                iconURL: nil,
-                device: .iPad,
-                bio: nil
-            ),
+            user: User(id: "preview", name: "たいき"),
             repository: MockWorldRepository(),
             userRepository: MockUserRepository()
         )

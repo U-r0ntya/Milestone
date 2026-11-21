@@ -45,12 +45,6 @@ struct WorldDetailView: View {
         scrollOffset > 48  // タイトルの上の余白（8）＋ ワールド名の 1 行（約 40）
     }
 
-    // ランク（サバイバルで、日数（time）があるときだけ）
-    private func rank(for world: World) -> WorldRank? {
-        guard world.gameMode == .survival, world.time != nil else { return nil }
-        return WorldRank(world: world)
-    }
-
     private func content(_ world: World) -> some View {
         GeometryReader { proxy in
             let scale = proxy.size.width / 390  // デザイン（幅 390）の 1 が、画面の何ポイントか
@@ -59,13 +53,9 @@ struct WorldDetailView: View {
 
             ScrollView {
                 VStack(spacing: 12) {
-                    WorldDetailHeader(world: world, rank: rank(for: world))
+                    WorldDetailHeader(world: world)
                         .padding(.top, 8)
                         .frame(minHeight: max(groundY - 12, 0), alignment: .top)
-
-                    if let rank = rank(for: world) {
-                        WorldRankCard(rank: rank)
-                    }
 
                     WorldMapCard(days: world.days)
 
@@ -108,15 +98,10 @@ struct WorldDetailView: View {
         .animation(.easeInOut(duration: 0.2), value: showsBarTitle)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                // ワールド名と、その下にランク（ランクがあるときだけ）
+                // ワールド名
                 VStack(spacing: 0) {
                     Text(world.displayName)
                         .font(.headline)
-                    if let rank = rank(for: world) {
-                        Text(rank.title)
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
                 }
                 .foregroundStyle(.white)
                 .lineLimit(1)
@@ -506,13 +491,7 @@ struct WorldDetailView: View {
     ]
     return NavigationStack {
         WorldDetailView(
-            user: User(
-                id: "preview",
-                name: "たいき",
-                iconURL: nil,
-                device: .iPhone,
-                bio: nil
-            ),
+            user: User(id: "preview", name: "たいき"),
             worldId: "preview-world-1",
             viewModel: viewModel
         )
