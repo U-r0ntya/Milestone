@@ -31,7 +31,8 @@ struct WorldDetailView: View {
                 content(world)
             } else {
                 ContentUnavailableView("ワールドが見つかりません", systemImage: "cube")
-                    .appHeader("ワールドの情報")
+                    .navigationTitle("ワールド情報")
+                    .navigationBarTitleDisplayMode(.inline)
             }
         }
         .onAppear {

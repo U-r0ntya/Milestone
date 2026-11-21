@@ -155,7 +155,7 @@ struct WorldListView: View {
                 Button("もう一度読み込む") {
                     Task { await viewModel.loadWorlds(ownerId: user.id) }
                 }
-                .buttonStyle(.primary)
+                .buttonStyle(.worldListGradient)
             }
         } else {
             ContentUnavailableView(
