@@ -18,10 +18,8 @@ struct MainView: View {
                         }.accessibilityLabel("設定")
                     }
                 }
-                .sheet(isPresented: $isShowingSettings) {
-                    SettingsView(authViewModel: authViewModel)
+                .navigationDestination(isPresented: $isShowingSettings) { SettingsView(authViewModel: authViewModel)
                 }
-                .accessibilityLabel("閉じる")
         }
     }
 }
