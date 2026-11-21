@@ -2,17 +2,19 @@ import SwiftUI
 
 struct LoginView: View {
     let authViewModel: AuthViewModel
-    @State private var showSheet = false
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
             // アプリ名のロゴ（宝石＋Milestone）
             TitleLogo(size: 48)
 
-            Text("Minecraft統合版プレイヤーのためのSNSとツール")
+            Text("Minecraftのワールドを管理するアプリ")
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(.appTextSecondary)
                 .padding(.top, 10)
+            Text("iPhone、iPad専用")
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(.appTextSecondary)
 
             Spacer()
             // Google のログインボタン
@@ -46,21 +48,8 @@ struct LoginView: View {
                 .clipShape(Capsule())
             }
             .padding(.bottom, 10)
-
-            // 利用規約ボタン
-            Button {
-                showSheet = true
-            } label: {
-                Text("利用規約")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 300, height: 48)
-                    .background(Color.accentColor)
-                    .clipShape(Capsule())
-            }
-            .sheet(isPresented: $showSheet) {
-                Text("ここがシートの中身")  // 今後実装予定
-            }
+            .disabled(authViewModel.isSigningIn)
+            .opacity(authViewModel.isSigningIn ? 0.5 : 1)
 
             // Minecraft の利用ガイドラインで必要な注意書き
             Text(

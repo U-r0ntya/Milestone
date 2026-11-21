@@ -15,6 +15,7 @@ final class AuthViewModel {
 
     var state: AuthState = .checking
     var errorMessage: String? = nil
+    var isSigningIn = false
 
     private let repository: UserRepository
 
@@ -59,6 +60,8 @@ final class AuthViewModel {
 
     // Google でログイン → そのまま Firebase にもログイン
     func signIn() async {
+        isSigningIn = true
+        defer { isSigningIn = false }
 
         errorMessage = nil
         // GoogleService-Info.plist の CLIENT_ID を使う（固定文）
