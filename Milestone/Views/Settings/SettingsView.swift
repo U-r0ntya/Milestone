@@ -3,12 +3,27 @@ import SwiftUI
 // プロフィール（フェーズ7で作る）
 struct SettingsView: View {
     let authViewModel: AuthViewModel
+    let user: User
     var body: some View {
         List {
             Section {
-                Button("ログアウト", role: .destructive) {
-                    authViewModel.signOut()
+                Label {
+                    Text(user.name).padding(.leading, 3)
+                } icon: {
+                    Image(systemName: "person")
+                        .foregroundStyle(Color.accentColor)
+                        .font(.system(size: 15))
                 }
+                Button(role: .destructive) {
+                    authViewModel.signOut()
+                } label: {
+                    Label {
+                        Text("ログアウト")
+                    } icon: {
+                        Image(systemName: "rectangle.portrait.and.arrow.forward")
+                            .font(.system(size: 15))
+                    }
+                }.padding(.leading, 3)
             }
             Section {
                 Text(
@@ -25,7 +40,8 @@ struct SettingsView: View {
 #Preview {
     NavigationStack {
         SettingsView(
-            authViewModel: AuthViewModel(repository: MockUserRepository())
+            authViewModel: AuthViewModel(repository: MockUserRepository()),
+            user: User(id: "aaa", name: "taiki")
         )
     }
 }

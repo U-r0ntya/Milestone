@@ -18,7 +18,8 @@ struct MainView: View {
                         }.accessibilityLabel("設定")
                     }
                 }
-                .navigationDestination(isPresented: $isShowingSettings) { SettingsView(authViewModel: authViewModel)
+                .navigationDestination(isPresented: $isShowingSettings) {
+                    SettingsView(authViewModel: authViewModel, user: user)
                 }
         }
     }
