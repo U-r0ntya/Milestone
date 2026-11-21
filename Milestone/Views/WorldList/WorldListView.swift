@@ -52,19 +52,19 @@ struct WorldListView: View {
             .animation(.snappy, value: viewModel.updateAllMessage)
             .animation(.snappy, value: viewModel.favoriteWorldId)
         }
-        // スクロールした量を受け取る（いちばん上で 0、下にスクロールするとプラス）
+        // スクロールした量を受け取る
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
         } action: { _, newValue in
             scrollOffset = newValue
         }
-        // 背景：ライトは見やすい白、ダークは黒（写真のカードの枠の色が引き立つように、無地にする）
+        // 背景：ライトは見やすい白、ダークは黒
         .background {
             Color(hex: colorScheme == .dark ? 0x07080C : 0xF4F5F8)
                 .ignoresSafeArea()
         }
         // 上のバー：ふだんは色を付けない。スクロールして大きいタイトルが隠れたら、バーと「ワールド」を出す
-        .navigationTitle("ワールド")  // 次の画面の戻るボタンに出る名前
+        .navigationTitle("ワールド")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackgroundVisibility(
             showsBarTitle ? .visible : .hidden,
@@ -97,7 +97,7 @@ struct WorldListView: View {
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
-                    .disabled(viewModel.isUpdatingAll)  // 更新中は押せない（連打を防ぐ）
+                    .disabled(viewModel.isUpdatingAll)  // 更新中は押せない
                     .accessibilityLabel("全部のワールドを更新")
                 }
             }
@@ -173,9 +173,6 @@ struct WorldListView: View {
         if let message = viewModel.updateAllMessage {
             // 文字の 1 行目の線（ベースライン）にそろえる。アイコンも文字と同じ大きさにする
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.body.bold())
-                    .foregroundStyle(Color.worldListAccent)
                 Text(message)
                     .font(.footnote)
                     .frame(maxWidth: .infinity, alignment: .leading)
