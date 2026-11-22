@@ -6,7 +6,6 @@ import SwiftUI
 enum AuthState {
     case checking  // 確認中（起動直後。前のログインが残っているか調べている）
     case signedOut  // 未ログイン（ログイン画面を出す）
-    case needsOnboarding  // ログイン済みだが、まだ初回設定をしていない（初回設定の画面を出す）
     case signedIn(User)  // 準備完了。User はログイン中の人の情報（ホーム画面を出す）
 }
 
@@ -16,7 +15,7 @@ final class AuthViewModel {
 
     var state: AuthState = .checking
     var errorMessage: String? = nil
-    var isSaving = false   // 保存中かどうか
+    var isSigningIn = false
 
     private let repository: UserRepository
 
@@ -46,9 +45,9 @@ final class AuthViewModel {
         do {
             // repositoryに uid の人を探してもらう。結果は User?（いれば User、いなければ nil）
             let user = try await repository.fetchUser(uid: uid)
-            // userが、nil なら needsOnboarding、返ってきたら signedIn、
+            // user が nil なら作って保存し、返ってきたら signedIn
             guard let user else {
-                state = .needsOnboarding
+                await createUser(uid: uid)
                 return
             }
             state = .signedIn(user)
@@ -61,6 +60,8 @@ final class AuthViewModel {
 
     // Google でログイン → そのまま Firebase にもログイン
     func signIn() async {
+        isSigningIn = true
+        defer { isSigningIn = false }
 
         errorMessage = nil
         // GoogleService-Info.plist の CLIENT_ID を使う（固定文）
@@ -122,25 +123,14 @@ final class AuthViewModel {
         }
     }
 
-    // 初回設定の完了：入力された内容で User を作って保存し、ホームへ進む
-    func completeOnboarding(name: String, device: Device, bio: String?) async {
-
-        isSaving = true  // 保存を始めた
-        defer { isSaving = false }  // この関数を抜けるときに、必ず false に戻す
+    // 初めてログインした人の User を作って保存し、ホームへ進む
+    private func createUser(uid: String) async {
 
         errorMessage = nil
-        // ログイン中の人の uid を取り出す。いなければ state を signedOut にして終わり
-        guard let firebaseUser = Auth.auth().currentUser else {
-            state = .signedOut
-            return
-        }
-        // 受け取った device・name・bio と uid で User を作る
+        // uid と Google の名前で User を作る
         let user = User(
-            id: firebaseUser.uid,
-            name: name,
-            iconURL: nil,
-            device: device,
-            bio: bio
+            id: uid,
+            name: Auth.auth().currentUser?.displayName ?? "プレイヤー"
         )
         do {
             // repository の saveUser で保存する
@@ -148,8 +138,8 @@ final class AuthViewModel {
             // 成功したら、state を signedIn にする
             state = .signedIn(user)
         } catch {
-            // 失敗したら、errorMessage にメッセージを入れる（state は needsOnboarding のまま）
             errorMessage = "保存できませんでした。通信状態を確かめて、もう一度試してください。"
+            state = .signedOut
         }
     }
 

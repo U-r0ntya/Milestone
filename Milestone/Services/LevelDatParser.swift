@@ -10,7 +10,7 @@ enum LevelDatError: Error {
 enum LevelDatParser {
     // level.dat の中身から World を作る
     // root：NBTReader.readLevelDat が返した辞書（キーは "LevelName" など）
-    // ownerId・device：ログイン中の人の User から
+    // ownerId：ログイン中の人の ID、device：使っている端末の機種
     static func parse(
         _ root: [String: NBTValue],
         ownerId: String,

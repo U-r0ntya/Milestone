@@ -9,7 +9,7 @@ import Foundation
 struct World: Codable, Identifiable, Hashable{
     var id: String  // ワールド ID（アプリが自動で入れる）
     let ownerId: String  // 持ち主のユーザー ID（User から）
-    let device: Device  // 機種（User から）
+    let device: Device  // 登録した端末の機種
     var createdAt: Date  // 登録した日時（アプリが自動で入れる）
     let name: String  // ワールドの名前（level.dat の LevelName）
     var customName: String? = nil

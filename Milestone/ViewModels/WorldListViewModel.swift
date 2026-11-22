@@ -164,6 +164,7 @@ final class WorldListViewModel {
             try await repository.deleteWorld(id: worldId)
             worlds.removeAll { $0.id == worldId }
             LevelDatBookmarkStore.remove(for: worldId)
+            WorldPhotoStore.shared.remove(for: worldId)  // 端末の中の写真も消す
             // もし消したいワールドがお気に入りなら
             if favoriteWorldId == worldId {
                 try? await userRepository.updateFavoriteWorld(
@@ -181,7 +182,8 @@ final class WorldListViewModel {
         }
     }
 
-    // ワールドを更新する処理（選んだ level.dat を読みなおして、今のワールドを新しい内容にする）
+    // ワールドを更新する処理（Minecraft フォルダ・ワールドのフォルダ・level.dat のどれかを読みなおして、今のワールドを新しい内容にする）
+    // Minecraft フォルダのときは、今のワールドと同じフォルダ名のワールドを中から探す
     func updateWorld(worldId: String, from url: URL) async -> Bool {
         guard !isUpdating else { return false }
         isUpdating = true
@@ -196,40 +198,30 @@ final class WorldListViewModel {
         // 更新前のワールド（id や名前など、残すものを取り出すのに使う）
         let oldWorld = worlds[index]
 
-        // level.dat 以外のファイル（level.dat_old など）は断る
-        guard url.lastPathComponent == "level.dat" else {
-            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
-            return false
-        }
-        // ファイルを読む許可を取る
-        guard url.startAccessingSecurityScopedResource() else {
-            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
-            return false
-        }
-        defer { url.stopAccessingSecurityScopedResource() }
-
-        // Data にする → NBTReader で辞書にする → LevelDatParser で新しい World を作る
+        // フォルダなら level.dat と写真、level.dat なら level.dat だけを読み出す
+        // Data → NBTReader で辞書にする → LevelDatParser で新しい World を作る
+        let result: WorldFolderReader.Result
         var newWorld: World
         do {
-            let data = try Data(contentsOf: url)
-            let root = try NBTReader.readLevelDat(data)
+            result = try WorldFolderReader.read(from: url, worldFolderName: oldWorld.folderName)
+            let root = try NBTReader.readLevelDat(result.levelDat)
             newWorld = try LevelDatParser.parse(
                 root,
                 ownerId: oldWorld.ownerId,
                 device: oldWorld.device
             )
         } catch {
-            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
+            errorMessage = "読みこめませんでした。Minecraft フォルダを選んでいるか、確かめてください。"
             return false
         }
 
-        // 選んだファイルのフォルダ名が、今のワールドと違えば、別のワールドなので断る
+        // 選んだもののフォルダ名が、今のワールドと違えば、別のワールドなので断る
         // 今のワールドにフォルダ名がないときは、比べられないので、そのまま進む
-        let folderName = url.deletingLastPathComponent().lastPathComponent
+        let folderName = result.folderName
         if let oldFolderName = oldWorld.folderName,
             oldFolderName != folderName
         {
-            errorMessage = "別のワールドの level.dat です。"
+            errorMessage = "別のワールドです。"
             return false
         }
 
@@ -245,8 +237,20 @@ final class WorldListViewModel {
             return false
         }
 
-        // 許可が生きているうちに、ブックマークも保存しなおす
-        LevelDatBookmarkStore.save(url, for: newWorld.id)
+        // ブックマークも保存しなおす（ブックマークを作るあいだだけ、もう一度許可を取る）
+        // Minecraft フォルダなら全部のワールドで使う場所として、それ以外はこのワールドの場所として覚える
+        if url.startAccessingSecurityScopedResource() {
+            if result.fromMinecraftFolder {
+                MinecraftFolderStore.save(url)
+            } else {
+                LevelDatBookmarkStore.save(url, for: newWorld.id)
+            }
+            url.stopAccessingSecurityScopedResource()
+        }
+        // 写真が見つかったときだけ、新しい写真にする（level.dat だけのときは、前の写真を残す）
+        if let photo = result.photo {
+            WorldPhotoStore.shared.save(photo, for: newWorld.id)
+        }
 
         // 通信を待っているあいだに一覧が変わったかもしれないので、場所を探しなおす
         guard let newIndex = worlds.firstIndex(where: { $0.id == newWorld.id })
@@ -257,8 +261,9 @@ final class WorldListViewModel {
         return true
     }
 
-    // 全部のワールドを、ブックマークから level.dat を読みなおして更新する
-    // ブックマークがないワールドは、選ぶ画面を出さずに飛ばす（何件もあると、選ぶ画面が続けて出てしまうため）
+    // 全部のワールドを読みなおして更新する（写真も新しくなる）
+    // 覚えてある Minecraft フォルダから読む。フォルダ名がないワールドは、ワールドごとに覚えた場所から読む
+    // どちらもないワールドは、選ぶ画面を出さずに飛ばす（何件もあると、選ぶ画面が続けて出てしまうため）
     func updateAllWorlds() async {
         guard !isUpdatingAll else { return }  // 更新中にもう一度呼ばれたら何もしない
         isUpdatingAll = true  // 更新を始めた
@@ -271,8 +276,11 @@ final class WorldListViewModel {
         var failedCount = 0  // 読めなかった・保存できなかった数
         var noBookmarkCount = 0  // ブックマークがない数
 
+        let minecraftFolder = MinecraftFolderStore.resolve()  // 覚えてある Minecraft フォルダ
         for id in ids {
-            if let url = LevelDatBookmarkStore.resolve(for: id) {
+            let hasFolderName = worlds.first { $0.id == id }?.folderName != nil
+            let url = hasFolderName ? (minecraftFolder ?? LevelDatBookmarkStore.resolve(for: id)) : LevelDatBookmarkStore.resolve(for: id)
+            if let url {
                 if await updateWorld(worldId: id, from: url) {
                     updatedCount += 1
                 } else {
@@ -285,13 +293,13 @@ final class WorldListViewModel {
         // updateWorld が失敗したときの文が残っているので消す（結果は updateAllMessage で出す）
         errorMessage = nil
 
-        // 結果の文を作る（0 件のものは出さない）
-        var message = "\(updatedCount) 件を更新しました。"
+        // 結果の文を作る（0 件のものは出さない。2つ目からは改行して並べる）
+        var message = "\(updatedCount) 件を更新しました"
         if failedCount > 0 {
-            message += "\(failedCount) 件は読めませんでした。"
+            message += "\n\(failedCount) 件は読めませんでした"
         }
         if noBookmarkCount > 0 {
-            message += "\(noBookmarkCount) 件は、ワールドの情報の画面から level.dat を選んでください。"
+            message += "\n\(noBookmarkCount) 件は、右上の ＋ から Minecraft フォルダを選ぶと更新できます"
         }
         updateAllMessage = message
     }

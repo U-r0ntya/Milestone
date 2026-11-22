@@ -1,30 +1,36 @@
 import Foundation
 import Observation
 
-// ワールドの登録の ViewModel（level.dat を読みこんで、Firestore に保存する）
+// ワールドの登録の ViewModel
+// 「Minecraft」フォルダを読みこむ → 見つかったワールドを並べる → 選んだものを Firestore に保存する
+// 写真はサーバーに上げず、端末の中だけに保存する（WorldPhotoStore）
 @Observable
 @MainActor
 final class WorldImportViewModel {
-    // 読みこめたワールド。まだなら nil
-    var world: World? = nil
+    // 見つかったワールドの1つ
+    struct Candidate: Identifiable {
+        let world: World
+        let photo: Data?  // ワールドの写真（なければ nil）
+        var isRegistered: Bool  // すでに登録してあるか
+        var id: String { world.folderName ?? world.id }  // フォルダ名で見分ける
+    }
+
+    // 見つかったワールド（最近遊んだ順）。まだ読みこんでいなければ空
+    var candidates: [Candidate] = []
+    // 登録するものとして選んでいるワールド（Candidate の id）
+    var selectedIds: Set<String> = []
     // 登録中か
     var isSaving: Bool = false
     // 失敗したときに出す文
     var errorMessage: String? = nil
-    // 登録が終わったか（画面を閉じる合図）
+    // 全部登録できたか（画面を閉じる合図）
     var isSaved: Bool = false
-    // URLを保管
+    // 登録できた数（一部だけ失敗したときも、一覧を読みなおすのに使う）
+    var savedCount: Int = 0
+    // 選んだ Minecraft フォルダの場所
     private var pickedURL: URL?
     // すでに登録してあるワールド（一覧から受け取る）
     private let existingWorlds: [World]
-
-    // 読みこんだワールドが、すでに登録してあるか
-    var isDuplicate: Bool {
-        // 読みこんだワールドのフォルダ名を取り出す（なければ false）
-        guard let folderName = world?.folderName else { return false }
-        // existingWorlds の中に、同じフォルダ名のものがあれば true
-        return existingWorlds.contains { $0.folderName == folderName }
-    }
 
     // ワールドを保存する係
     private let repository: WorldRepository
@@ -38,58 +44,114 @@ final class WorldImportViewModel {
         self.existingWorlds = existingWorlds
     }
 
-    // level.dat を読みこんで World を作る
-    func importLevelDat(from url: URL, ownerId: String, device: Device) {
-        errorMessage = nil
-        guard url.lastPathComponent == "level.dat" else {
-            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
-            return
-        }
-        // ファイルを読む許可を取る
-        guard url.startAccessingSecurityScopedResource() else {
-            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"
-            return
-        }
-        defer { url.stopAccessingSecurityScopedResource() }  // この関数を抜けるときに、必ず読み終わりを伝える
-        // Data にする → NBTReader で辞書にする → LevelDatParser で World にする → world に入れる
-        do {
-            let data = try Data(contentsOf: url)
-            let root = try NBTReader.readLevelDat(data)
-            var world = try LevelDatParser.parse(
-                root,
-                ownerId: ownerId,
-                device: device
-            )
-            world.folderName = url.deletingLastPathComponent().lastPathComponent
-            self.world = world  // worldを保管
-            pickedURL = url  // URLを保管しておく
-        } catch {
-            errorMessage = "このファイルを読みこめませんでした。level.dat を選んでいるか、確かめてください。"  //  失敗したら
+    // 選んでいて、まだ登録していないワールド
+    var selectedCandidates: [Candidate] {
+        candidates.filter { selectedIds.contains($0.id) && !$0.isRegistered }
+    }
+
+    // まだ登録していないワールドがあるか
+    var hasUnregistered: Bool {
+        candidates.contains { !$0.isRegistered }
+    }
+
+    // まだ登録していないワールドを、全部選んでいるか
+    var isAllSelected: Bool {
+        candidates.filter { !$0.isRegistered }.allSatisfy { selectedIds.contains($0.id) }
+    }
+
+    // 1つのワールドの選ぶ・外すを切りかえる（登録済みは選べない）
+    func toggle(_ candidate: Candidate) {
+        guard !candidate.isRegistered else { return }
+        if selectedIds.contains(candidate.id) {
+            selectedIds.remove(candidate.id)
+        } else {
+            selectedIds.insert(candidate.id)
         }
     }
 
-    // 読みこんだワールドを登録する
-    func save() async {
-        // すでに読み込んであるワールドか（あれば何もしない）
-        guard !isDuplicate else { return }
-        // 読みこんだワールドがなければ、何もしない
-        guard let world else { return }
-        // 登録中にもう一度呼ばれたら、何もしない
-        guard !isSaving else { return }
+    // まだ登録していないワールドを、全部選ぶ（全部選んでいれば、全部外す）
+    func toggleAll() {
+        if isAllSelected {
+            selectedIds.removeAll()
+        } else {
+            selectedIds = Set(candidates.filter { !$0.isRegistered }.map(\.id))
+        }
+    }
+
+    // Minecraft フォルダを読みこんで、ワールドを並べる
+    func importMinecraftFolder(from url: URL, ownerId: String, device: Device) {
         errorMessage = nil
-        // 登録を始めた。抜けるときに必ず false に戻す
-        isSaving = true
-        defer { isSaving = false }
-        // repository.saveWorld で保存する。成功したら isSaved = true
+
+        let results: [WorldFolderReader.Result]
         do {
-            try await repository.saveWorld(world)
-            if let pickedURL, pickedURL.startAccessingSecurityScopedResource() {
-                defer { pickedURL.stopAccessingSecurityScopedResource() }
-                LevelDatBookmarkStore.save(pickedURL, for: world.id)
-            }
-            isSaved = true
+            results = try WorldFolderReader.readAll(from: url)
         } catch {
-            errorMessage = "ワールドを保存できませんでした。通信状態を確かめて、もう一度試してください。"
+            errorMessage = "ワールドが見つかりませんでした。「Minecraft」フォルダを選んでいるか、確かめてください。"
+            return
+        }
+
+        // 1つずつ World にする（Data → NBTReader で辞書にする → LevelDatParser で World にする）
+        // 読めなかったワールドは飛ばす
+        var found: [Candidate] = []
+        for result in results {
+            guard let root = try? NBTReader.readLevelDat(result.levelDat),
+                var world = try? LevelDatParser.parse(root, ownerId: ownerId, device: device)
+            else { continue }
+            world.folderName = result.folderName
+            let isRegistered = existingWorlds.contains { $0.folderName == result.folderName }
+            found.append(Candidate(world: world, photo: result.photo, isRegistered: isRegistered))
+        }
+
+        guard !found.isEmpty else {
+            candidates = []
+            errorMessage = "ワールドが見つかりませんでした。「Minecraft」フォルダを選んでいるか、確かめてください。"
+            return
+        }
+
+        // 最近遊んだ順に並べて、まだ登録していないものを最初から選んでおく
+        candidates = found.sorted {
+            ($0.world.lastPlayed ?? .distantPast) > ($1.world.lastPlayed ?? .distantPast)
+        }
+        selectedIds = Set(candidates.filter { !$0.isRegistered }.map(\.id))
+        pickedURL = url
+    }
+
+    // 選んだワールドを登録する
+    func save() async {
+        let targets = selectedCandidates
+        guard !targets.isEmpty, !isSaving else { return }
+        errorMessage = nil
+        isSaving = true  // 登録を始めた。抜けるときに必ず false に戻す
+        defer { isSaving = false }
+
+        // Minecraft フォルダの場所を覚えておく（全部の更新で、選びなおさずに読めるように）
+        if let pickedURL, pickedURL.startAccessingSecurityScopedResource() {
+            MinecraftFolderStore.save(pickedURL)
+            pickedURL.stopAccessingSecurityScopedResource()
+        }
+
+        // 1つずつ保存する。保存できたものは「登録済み」にして、選ぶのをやめる
+        var failedCount = 0
+        for target in targets {
+            do {
+                try await repository.saveWorld(target.world)
+                if let photo = target.photo {
+                    WorldPhotoStore.shared.save(photo, for: target.world.id)  // 写真は端末の中だけ
+                }
+                if let index = candidates.firstIndex(where: { $0.id == target.id }) {
+                    candidates[index].isRegistered = true
+                }
+                selectedIds.remove(target.id)
+                savedCount += 1
+            } catch {
+                failedCount += 1
+            }
+        }
+
+        if failedCount == 0 {
+            isSaved = true
+        } else {
+            errorMessage = "\(failedCount) 件のワールドを保存できませんでした。通信状態を確かめて、もう一度試してください。"
         }
     }
 }
