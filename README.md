@@ -7,11 +7,11 @@ iPhone・iPad でマイクラ統合版を遊ぶ人が、自分のワールドを
 > NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.
 > このアプリは Minecraft の公式アプリではありません。Mojang および Microsoft とは関係ありません。
 
-<!-- スクリーンショット：docs/screenshots/ に画像を置いて、下の表に並べる
 | 一覧（ライト） | 一覧（ダーク） | ワールドの情報 | 登録 |
 |---|---|---|---|
-| ![](docs/screenshots/list-light.png) | ![](docs/screenshots/list-dark.png) | ![](docs/screenshots/detail.png) | ![](docs/screenshots/import.png) |
--->
+| <img src="docs/screenshots/list-light.png" width="200"> | <img src="docs/screenshots/list-dark.png" width="200"> | <img src="docs/screenshots/detail.png" width="200"> | <img src="docs/screenshots/import.png" width="200"> |
+
+※ 一覧のカードの写真（マイクラのゲーム画面）は、README ではぼかしている。アプリでは、使う人の端末の中にあるワールドの写真がそのまま表示される。
 
 ## 1. 目的
 - スマホ・タブレットのマイクラ統合版には、自分のワールドを一覧で見たり、どれだけ遊んだかを振り返ったりする場所がない。ワールドの書き出し（バックアップ）もゲームの中ではできず、端末が壊れると何年分ものワールドが消える不安がある。
