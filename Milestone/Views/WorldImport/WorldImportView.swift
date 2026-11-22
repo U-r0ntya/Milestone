@@ -10,7 +10,6 @@ struct WorldImportView: View {
     @State private var viewModel: WorldImportViewModel
     @State private var isShowingFilePicker = false  // フォルダを選ぶ画面を出しているか
     @Environment(\.dismiss) private var dismiss  // 登録できたときに、シートを閉じるための機能
-    @Environment(\.colorScheme) private var colorScheme  // ダークモードなら、背景を夜の星空にする
 
     // 今使っている端末の機種（ワールドを登録した機種として保存する。説明の文にも使う）
     private var device: Device {
@@ -65,7 +64,7 @@ struct WorldImportView: View {
                         pickButton
                         Text("読みこんだ情報は、ワールドの名前のほかは、あとから変えられません。写真はこの端末の中だけに保存します。")
                             .font(.caption)
-                            .foregroundStyle(.white.opacity(0.8))
+                            .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         candidateSection
@@ -73,23 +72,11 @@ struct WorldImportView: View {
                 }
                 .padding(16)
             }
-            // 背景：空（昼は青い空と雲、夜は星空）
-            .background {
-                WorldListBackground(isNight: colorScheme == .dark, showsSunAndMoon: false)
-                    .ignoresSafeArea()
-            }
-            // 上のバー：色を付けず空を見せて、まん中に白いタイトル
+            .background(Color.appBackground)  // 一覧と同じ、無地の背景
+            // 上のバー：色を付けず、まん中にタイトル（文字はモードに合わせて黒・白）
             .navigationTitle("ワールドを登録")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("ワールドを登録")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                }
-            }
             // フォルダを選ぶ画面（「ファイル」アプリと同じ見た目）
             .fileImporter(
                 isPresented: $isShowingFilePicker,
@@ -121,16 +108,10 @@ struct WorldImportView: View {
                 .font(.footnote.weight(.medium))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .foregroundStyle(Color(hex: 0xFFD9D5))  // 空の上でも読める、うすい赤
+        .foregroundStyle(.red)
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        // 赤みのあるガラス（詳細画面の「削除」のボタンと同じ色）
-        .background(Color(hex: 0xB3261E, opacity: 0.35), in: RoundedRectangle(cornerRadius: 16))
-        .worldListGlass(cornerRadius: 16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color(hex: 0xFF786E, opacity: 0.55), lineWidth: 1)
-        )
+        .background(Color.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))  // うすい赤の板
     }
 
     // Minecraft フォルダの場所の説明（3つの手順）
@@ -138,23 +119,20 @@ struct WorldImportView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Minecraft フォルダの場所")
                 .font(.headline)
-                .foregroundStyle(.white)
 
             step(1, "下のボタンを押す", "「ファイル」アプリと同じ画面が開きます")
             step(2, "「この\(device.displayName)内」を開く", "左上の「ブラウズ」から選べます")
             step(3, "「Minecraft」フォルダを選んで「開く」", "中のワールドが、写真といっしょに全部並びます")
 
-            Rectangle()
-                .fill(.white.opacity(0.14))
-                .frame(height: 1)
+            Divider()
 
             Text("並んだワールドの中から、登録したいものを選べます。登録してあるワールドは選べません。")
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .worldListGlass(cornerRadius: 20)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
     }
 
     // 手順の1行：丸い番号・見出し・説明
@@ -164,15 +142,14 @@ struct WorldImportView: View {
         HStack(alignment: .top, spacing: 10) {
             Text("\(number)")
                 .font(.footnote.bold())
-                .foregroundStyle(Color.worldListAccent)
-                .worldListGlassCircle(size: 24)
+                .frame(width: 24, height: 24)
+                .background(Color.primary.opacity(0.08), in: Circle())  // うすい灰色の丸
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.bold())
-                    .foregroundStyle(.white)
                 Text(detail)
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -183,8 +160,11 @@ struct WorldImportView: View {
             isShowingFilePicker = true
         } label: {
             Label("Minecraft フォルダを選ぶ", systemImage: "folder")
+                .frame(maxWidth: .infinity)
+                .foregroundStyle(Color(.systemBackground))  // 黒い板に白い文字（ダークは白い板に黒い文字）
         }
-        .buttonStyle(.worldListGradient)
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
     }
 
     // 読みこみ成功：見つかったワールドの一覧と、登録のボタン
@@ -203,21 +183,17 @@ struct WorldImportView: View {
                 .disabled(viewModel.isSaving)
             }
         }
-        .foregroundStyle(.white)
-        .shadow(color: .black.opacity(0.3), radius: 4, y: 1)  // 明るい空の上でも読めるように
 
         VStack(spacing: 0) {
             ForEach(viewModel.candidates) { candidate in
                 candidateRow(candidate)
                 if candidate.id != viewModel.candidates.last?.id {
-                    Rectangle()
-                        .fill(.white.opacity(0.14))
-                        .frame(height: 1)
+                    Divider()
                         .padding(.leading, 112)
                 }
             }
         }
-        .worldListGlass(cornerRadius: 20)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
 
         VStack(spacing: 4) {
             // 選んだワールドを登録する（登録中はぐるぐるを出して、押せなくする）
@@ -236,13 +212,16 @@ struct WorldImportView: View {
             } label: {
                 Group {
                     if viewModel.isSaving {
-                        ProgressView().tint(.white)
+                        ProgressView().tint(Color(.systemBackground))
                     } else {
                         Text("選んだ \(viewModel.selectedCandidates.count) 個を登録する")
                     }
                 }
+                .frame(maxWidth: .infinity)
+                .foregroundStyle(Color(.systemBackground))  // 黒い板に白い文字（ダークは白い板に黒い文字）
             }
-            .buttonStyle(.worldListGradient)
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
             .disabled(viewModel.isSaving || viewModel.selectedCandidates.isEmpty)
 
             // 別のフォルダを選びなおす
@@ -250,7 +229,6 @@ struct WorldImportView: View {
                 isShowingFilePicker = true
             }
             .font(.subheadline.bold())
-            .foregroundStyle(.white)
             .frame(height: 44)
             .disabled(viewModel.isSaving)
         }
@@ -273,21 +251,21 @@ struct WorldImportView: View {
                         .lineLimit(1)
                     Text(subtitle(world))
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.75))
+                        .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 if candidate.isRegistered {
                     Text("登録済み")
                         .font(.caption.bold())
-                        .foregroundStyle(.white.opacity(0.75))
+                        .foregroundStyle(.secondary)
                 } else {
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                         .font(.title3)
-                        .foregroundStyle(isSelected ? Color.worldListAccent : .white.opacity(0.6))
+                        .foregroundStyle(isSelected ? Color.primary : Color.secondary)
                 }
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .contentShape(Rectangle())  // 透明なところも、押せる範囲に入れる
@@ -317,10 +295,10 @@ struct WorldImportView: View {
                         .resizable()
                         .scaledToFill()
                 } else {
-                    Color.white.opacity(0.12)
+                    Color(.tertiarySystemFill)
                         .overlay {
                             Image(systemName: candidate.world.gameMode.iconName)
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(.secondary)
                         }
                 }
             }

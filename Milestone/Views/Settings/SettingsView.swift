@@ -1,6 +1,6 @@
 import SwiftUI
 
-// プロフィール（フェーズ7で作る）
+// 設定の画面（ログイン中のアカウントとログアウト）
 struct SettingsView: View {
     let authViewModel: AuthViewModel
     let user: User

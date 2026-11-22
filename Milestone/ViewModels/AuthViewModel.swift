@@ -45,7 +45,7 @@ final class AuthViewModel {
         do {
             // repositoryに uid の人を探してもらう。結果は User?（いれば User、いなければ nil）
             let user = try await repository.fetchUser(uid: uid)
-            // userが、nil なら needsOnboarding、返ってきたら signedIn、
+            // user が nil なら作って保存し、返ってきたら signedIn
             guard let user else {
                 await createUser(uid: uid)
                 return
@@ -123,11 +123,11 @@ final class AuthViewModel {
         }
     }
 
-    // 初回設定の完了：入力された内容で User を作って保存し、ホームへ進む
+    // 初めてログインした人の User を作って保存し、ホームへ進む
     private func createUser(uid: String) async {
 
         errorMessage = nil
-        // 受け取った device・name・bio と uid で User を作る
+        // uid と Google の名前で User を作る
         let user = User(
             id: uid,
             name: Auth.auth().currentUser?.displayName ?? "プレイヤー"

@@ -15,7 +15,7 @@ struct WorldListView: View {
     }
 
     // ほかの画面と同じ2つの init（MainActor の都合）
-    // お気に入りの最初の値は、ここで渡す（.task で入れると、タブを戻るたびに古い値で上書きされる）
+    // お気に入りの最初の値は、ここで渡す（.task で入れると、画面に戻るたびに古い値で上書きされる）
     init(user: User) {
         self.user = user
         _viewModel = State(
@@ -152,10 +152,13 @@ struct WorldListView: View {
             } description: {
                 Text(errorMessage)
             } actions: {
-                Button("もう一度読み込む") {
+                Button {
                     Task { await viewModel.loadWorlds(ownerId: user.id) }
+                } label: {
+                    Text("もう一度読み込む")
+                        .foregroundStyle(Color(.systemBackground))  // 黒い板に白い文字（ダークは白い板に黒い文字）
                 }
-                .buttonStyle(.worldListGradient)
+                .buttonStyle(.borderedProminent)
             }
         } else {
             ContentUnavailableView(
@@ -189,7 +192,7 @@ struct WorldListView: View {
                 .accessibilityLabel("とじる")
             }
             .padding(12)
-            .worldListGlass(cornerRadius: 16)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
             // 出るとき・消えるとき：上から少し動きながら、ふわっと出入りする
             .transition(.move(edge: .top).combined(with: .opacity))
         }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// ログイン後のメイン画面：タイムライン／ワールド／プロフィールの3つのタブ
+// ログイン後のメイン画面：ワールドの一覧（左上に設定）
 struct MainView: View {
     let authViewModel: AuthViewModel
     let user: User  // ログイン中の人

@@ -63,10 +63,10 @@ struct LoginView: View {
                     "Minecraft 公式の製品ではありません。Mojang および Microsoft が承認・関与しているものではありません。"
                 )
                 .font(.caption2)
-                .foregroundStyle(.appTextSecondary)  // 控えめな文字色（ダークではうすい紫）
+                .foregroundStyle(.appTextSecondary)  // 控えめな文字色
                 .multilineTextAlignment(.center)  // 折り返した行も中央ぞろえ
                 .frame(maxWidth: 300)
-                .padding(.top, 24)  // 利用規約ボタンとの間をあける
+                .padding(.top, 24)  // ログインボタンとの間をあける
 
                 // エラーがあれば赤字で表示
                 Text(authViewModel.errorMessage ?? "")  // エラーが無いときは空の文字

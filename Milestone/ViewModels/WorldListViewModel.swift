@@ -211,7 +211,7 @@ final class WorldListViewModel {
                 device: oldWorld.device
             )
         } catch {
-            errorMessage = "読みこめませんでした。ワールドのフォルダか level.dat を選んでいるか、確かめてください。"
+            errorMessage = "読みこめませんでした。Minecraft フォルダを選んでいるか、確かめてください。"
             return false
         }
 

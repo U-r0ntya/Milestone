@@ -21,7 +21,7 @@ enum WorldFolderReader {
         case notFound  // ワールドが見つからない
     }
 
-    // 写真が大きすぎるときは読まない（ふつうは 200KB くらい）
+    // 写真が大きすぎるときは読まない
     private static let maxPhotoBytes = 10 * 1024 * 1024
 
     // MARK: - 全部のワールド

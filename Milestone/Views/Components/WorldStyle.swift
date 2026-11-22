@@ -1,10 +1,9 @@
 import SwiftUI
 
-// ワールドの一覧で使う色とアイコン（ゲームモード・難易度ごと）
-// 色は Assets.xcassets/Colors/World の Color Set（ライト・ダークで自動で切りかわる）
+// ゲームモードのアイコンと、難易度を出すかどうか
 
 extension GameMode {
-    // 大看板のアイコン（SF Symbols の名前）
+    // ゲームモードのアイコン（SF Symbols の名前）
     var iconName: String {
         switch self {
         case .survival: "heart.fill"
